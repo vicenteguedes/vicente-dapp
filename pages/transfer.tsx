@@ -2,9 +2,11 @@
 import NavBar from "@/components/Navbar";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Address, Hash, parseEther, stringify, TransactionReceipt } from "viem";
-import SnackbarComponent from "@/components/SnackBar";
+import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
+import { useSnackbar } from "notistack";
+
+const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
 
 export default function Transfer() {
   const { account, client, chain } = useClient();
@@ -12,18 +14,8 @@ export default function Transfer() {
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
   const [ethAmount, setEthAmount] = useState<string>();
-  const [snackbar, setSnackbar] = useState<React.ReactNode>(null);
-  const [receipt, setReceipt] = useState<TransactionReceipt>();
+  const { enqueueSnackbar } = useSnackbar();
   const [hash, setHash] = useState<Hash>();
-
-  const showSnackbar = (
-    message: string,
-    severity?: "error" | "warning" | "info" | "success"
-  ) => {
-    setSnackbar(<SnackbarComponent message={message} severity={severity} />);
-    // Clear the snackbar after 3 seconds
-    setTimeout(() => setSnackbar(null), 3000);
-  };
 
   const transferTokens = async () => {
     try {
@@ -45,10 +37,13 @@ export default function Transfer() {
       });
 
       setHash(hash);
-
-      showSnackbar(`Transaction sent successfully: ${hash}`, "success");
+      enqueueSnackbar(`Your transaction is being processed: TX ${hash}`, {
+        variant: "info",
+      });
     } catch (error) {
-      showSnackbar(`Failed to send transaction: ${error}`);
+      enqueueSnackbar(`Failed to send transaction: ${error}`, {
+        variant: "error",
+      });
     }
   };
 
@@ -56,25 +51,20 @@ export default function Transfer() {
     (async () => {
       if (hash) {
         const receipt = await client!.waitForTransactionReceipt({ hash });
-        setReceipt(receipt);
+
+        enqueueSnackbar(
+          `Transaction sent successfully! ${SEPOLIA_TX_BASE_URL}/${receipt.transactionHash}`,
+          { variant: "success", autoHideDuration: 10000 }
+        );
       }
     })();
   }, [hash]);
-
-  const handleTransfer = () => {
-    // Ensure toAddress is not an empty string and amount is not zero
-    if (toAddress) {
-      transferTokens();
-    } else {
-      console.warn("Invalid input values");
-    }
-  };
 
   return (
     <>
       <NavBar />
       <Container>
-        <Typography variant="h4" component="h1" gutterBottom mt={2}>
+        <Typography variant="h4" gutterBottom mt={2}>
           Transfer tokens
         </Typography>
         <Box component="form" noValidate autoComplete="off" mt={2}>
@@ -111,23 +101,14 @@ export default function Transfer() {
             color="primary"
             fullWidth
             size="large"
-            onClick={() => handleTransfer()}
+            onClick={() => transferTokens()}
             style={{ marginTop: "16px" }}
             disabled={!toAddress || !ethAmount}
           >
             Transfer tokens
           </Button>
-          {receipt && (
-            <div>
-              Receipt:{" "}
-              <pre>
-                <code>{stringify(receipt, null, 2)}</code>
-              </pre>
-            </div>
-          )}
         </Box>
       </Container>
-      {snackbar}
     </>
   );
 }

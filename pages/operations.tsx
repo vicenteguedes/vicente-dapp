@@ -12,13 +12,13 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { Address, parseEther } from "viem";
-import SnackbarComponent from "@/components/SnackBar";
 import { useClient } from "@/contexts/ClientProvider";
 import {
   BUSD_ADDRESS,
   BUSD_TOKEN_ABI,
   ETH_DEAD_ADDRESS,
 } from "@/utils/constants";
+import { useSnackbar } from "notistack";
 
 export default function Operations() {
   const { account, client, chain } = useClient();
@@ -26,20 +26,11 @@ export default function Operations() {
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
   const [tokenAmount, setTokenAmount] = useState<string>();
-  const [snackbar, setSnackbar] = useState<React.ReactNode>(null);
+  const { enqueueSnackbar } = useSnackbar();
+
   const [operation, setOperation] = useState<string>("");
 
-  const showSnackbar = (
-    message: string,
-    severity?: "error" | "warning" | "info" | "success"
-  ) => {
-    setSnackbar(<SnackbarComponent message={message} severity={severity} />);
-    // Clear the snackbar after 3 seconds
-    setTimeout(() => setSnackbar(null), 3000);
-  };
-
   const handleExecuteOperation = () => {
-    // Ensure toAddress is not an empty string and amount is not zero
     switch (operation) {
       case "approve":
         approveTokens();
@@ -73,10 +64,9 @@ export default function Operations() {
       chain,
     });
 
-    showSnackbar(
-      `Approve operation executed successfully: TX ${data}`,
-      "success"
-    );
+    enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
+      variant: "success",
+    });
   };
 
   const burnTokens = async () => {
@@ -92,7 +82,9 @@ export default function Operations() {
       chain,
     });
 
-    showSnackbar(`Tokens burned successfully: ${hash}`, "success");
+    enqueueSnackbar(`Tokens burned successfully: ${hash}`, {
+      variant: "success",
+    });
   };
 
   const mintTokens = async () => {
@@ -109,14 +101,16 @@ export default function Operations() {
       args: [parseEther(tokenAmount!)],
     });
 
-    showSnackbar("Tokens minted successfully", "success");
+    enqueueSnackbar(`Tokens minted successfully`, {
+      variant: "success",
+    });
   };
 
   return (
     <>
       <NavBar />
       <Container>
-        <Typography variant="h4" component="h1" gutterBottom mt={2} mb={4}>
+        <Typography variant="h4" gutterBottom mt={2} mb={4}>
           Operations
         </Typography>
         <Box component="form" noValidate autoComplete="off" mt={2}>
@@ -127,18 +121,14 @@ export default function Operations() {
             displayEmpty
             renderValue={(selected) => {
               if (!selected) {
-                return <em>Select operation</em>;
+                return (
+                  <Typography variant="body1">Select operation...</Typography>
+                );
               }
 
-              return (
-                (selected as string).charAt(0).toUpperCase() +
-                (selected as string).slice(1)
-              );
+              return selected.charAt(0).toUpperCase() + selected.slice(1);
             }}
           >
-            <MenuItem value="">
-              <em>Select operation</em>
-            </MenuItem>
             <MenuItem value="approve">Approve</MenuItem>
             <MenuItem value="burn">Burn</MenuItem>
             <MenuItem value="mint">Mint</MenuItem>
@@ -198,7 +188,6 @@ export default function Operations() {
           )}
         </Box>
       </Container>
-      {snackbar}
     </>
   );
 }

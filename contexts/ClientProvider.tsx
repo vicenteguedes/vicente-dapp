@@ -89,6 +89,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
       .catch(() => {
         return undefined;
       });
+
     setIsOwner(owner === address);
   };
 

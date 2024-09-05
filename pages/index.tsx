@@ -1,5 +1,5 @@
 "use client";
-import Wallet from "@/components/AccountInfo";
+import Wallet from "@/components/Wallet";
 import NavBar from "@/components/Navbar";
 import { Container } from "@mui/material";
 

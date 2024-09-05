@@ -4,7 +4,7 @@ import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
-import AdbIcon from "@mui/icons-material/Adb";
+import CurrencyExchange from "@mui/icons-material/CurrencyExchange";
 import Link from "next/link";
 import { useClient } from "@/contexts/ClientProvider";
 
@@ -17,15 +17,23 @@ function NavBar() {
     <AppBar position="static" style={{ marginBottom: 10 }}>
       <Container maxWidth="xl">
         <Toolbar disableGutters>
-          <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
+          <CurrencyExchange
+            sx={{ display: { xs: "none", md: "flex" }, mr: 1 }}
+          />
           <Link
             href={"/"}
             style={{
               textDecoration: "none",
             }}
           >
-            <Button sx={{ my: 2, color: "white", display: "block" }}>
-              DAPP
+            <Button
+              sx={{
+                my: 2,
+                color: "white",
+                display: "block",
+              }}
+            >
+              dApp
             </Button>
           </Link>
 
