@@ -2,24 +2,16 @@
 import NavBar from "@/components/Navbar";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useState } from "react";
-import SnackbarComponent from "@/components/SnackBar";
 import { useClient } from "@/contexts/ClientProvider";
 import { BUSD_TOKEN_ABI } from "@/utils/constants";
 import { Address } from "viem";
+import { useSnackbar } from "notistack";
 
 export default function Admin() {
   const { account, client, chain, isOwner } = useClient();
-  const [snackbar, setSnackbar] = useState<React.ReactNode>(null);
-  const [toAddress, setToAddress] = useState<Address>();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const showSnackbar = (
-    message: string,
-    severity?: "error" | "warning" | "info" | "success"
-  ) => {
-    setSnackbar(<SnackbarComponent message={message} severity={severity} />);
-    // Clear the snackbar after 3 seconds
-    setTimeout(() => setSnackbar(null), 3000);
-  };
+  const [toAddress, setToAddress] = useState<Address>();
 
   const transferOwnership = async () => {
     try {
@@ -37,9 +29,13 @@ export default function Admin() {
         args: [toAddress],
       });
 
-      showSnackbar(`Ownership transferred successfully: TX ${data}`, "success");
+      enqueueSnackbar(`Ownership transferred successfully: TX ${data}`, {
+        variant: "success",
+      });
     } catch (error) {
-      showSnackbar(`Failed to send transaction: ${error}`);
+      enqueueSnackbar(`Failed to transfer ownership: ${error}`, {
+        variant: "error",
+      });
     }
   };
 
@@ -58,9 +54,13 @@ export default function Admin() {
         chain,
       });
 
-      showSnackbar(`Ownership renounced successfully: TX ${data}`, "success");
+      enqueueSnackbar(`Ownership renounced successfully: TX ${data}`, {
+        variant: "success",
+      });
     } catch (error) {
-      showSnackbar(`Failed to send transaction: ${error}`);
+      enqueueSnackbar(`Failed to renounce ownership: ${error}`, {
+        variant: "error",
+      });
     }
   };
 
@@ -77,7 +77,7 @@ export default function Admin() {
             fullWidth
             margin="normal"
             id="addressTo"
-            label="Transfer to Address"
+            label="Transfer ownership to address"
             variant="outlined"
             value={toAddress || ""}
             onChange={(e) => setToAddress(e.target.value as Address)}
@@ -106,7 +106,6 @@ export default function Admin() {
           </Button>
         </Box>
       </Container>
-      {snackbar}
     </>
   );
 }

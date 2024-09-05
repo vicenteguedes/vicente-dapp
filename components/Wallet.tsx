@@ -11,6 +11,10 @@ export default function Wallet() {
   const [balances, setBalances] = useState({ eth: "0", busd: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
 
+  const formatCurrency = (value: unknown) => {
+    return Number(formatEther(value as bigint)).toFixed(6);
+  };
+
   const getBUSDBalance = async (client: PublicActions) => {
     const busdBalance = await client.readContract({
       address: BUSD_ADDRESS,
@@ -19,7 +23,7 @@ export default function Wallet() {
       args: [account],
     });
 
-    return formatEther(busdBalance as bigint);
+    return formatCurrency(busdBalance);
   };
 
   const getBalances = async () => {
@@ -36,7 +40,7 @@ export default function Wallet() {
       const busdBalance = await getBUSDBalance(client);
 
       setBalances({
-        eth: formatEther(ethBalance).toString(),
+        eth: formatCurrency(ethBalance).toString(),
         busd: busdBalance.toString(),
       });
     } catch (error) {
@@ -57,7 +61,7 @@ export default function Wallet() {
         functionName: "totalSupply",
       });
 
-      setBusdTotalSupply(formatEther(busdSupply as bigint));
+      setBusdTotalSupply(formatCurrency(busdSupply));
     } catch (error) {
       console.error("Failed to get supply:", error);
     }
@@ -104,7 +108,7 @@ export default function Wallet() {
             </Box>
           ))
         ) : (
-          <Box>No Announced Wallet Providers</Box>
+          <Box>No Wallet Providers</Box>
         )}
 
         <Button
@@ -115,21 +119,21 @@ export default function Wallet() {
           Refresh
         </Button>
 
-        <Typography mt={2} mb={1} variant="body2">{`Your account: ${
+        <Typography mt={2} mb={1} variant="body1">{`Account: ${
           account ? account.slice(0, 6) + "..." + account.slice(-4) : ""
         } `}</Typography>
 
         <Typography
           mb={1}
-          variant="body2"
+          variant="body1"
         >{`ETH Balance: ${balances.eth} ETH`}</Typography>
         <Typography
           mb={1}
-          variant="body2"
+          variant="body1"
         >{`BUSD Balance: ${balances.busd} BUSD`}</Typography>
 
         <Box>
-          <Typography variant="body2">{`BUSD total supply: ${busdTotalSupply}`}</Typography>
+          <Typography variant="body1">{`BUSD total supply: ${busdTotalSupply}`}</Typography>
         </Box>
       </Box>
     </Box>
