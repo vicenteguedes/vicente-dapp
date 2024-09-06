@@ -13,11 +13,11 @@ import {
 import { useState } from "react";
 import { Address, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
-import { BUSD_ADDRESS, ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
+import { ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
 import { useSnackbar } from "notistack";
 
 export default function Operations() {
-  const { account, client, chainData: chain } = useClient();
+  const { account, client, chainData } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -43,21 +43,17 @@ export default function Operations() {
   };
 
   const approveTokens = async () => {
-    if (!client) {
-      return;
-    }
-
-    if (!toAddress) {
+    if (!client || !chainData || !toAddress) {
       return;
     }
 
     const data = await client.writeContract({
       account: fromAddress || account!,
-      address: BUSD_ADDRESS,
+      address: chainData.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "approve",
       args: [toAddress, parseEther(tokenAmount!)],
-      chain,
+      chain: chainData?.chain,
     });
 
     enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
@@ -75,7 +71,7 @@ export default function Operations() {
       account: (fromAddress || account) as Address,
       to: ETH_DEAD_ADDRESS,
       value: parseEther(tokenAmount),
-      chain,
+      chain: chainData?.chain,
     });
 
     enqueueSnackbar(`Tokens burned successfully: ${hash}`, {
@@ -84,16 +80,16 @@ export default function Operations() {
   };
 
   const mintTokens = async () => {
-    if (!client) {
+    if (!client || !chainData) {
       return;
     }
 
     await client.writeContract({
-      address: BUSD_ADDRESS,
+      address: chainData.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "mint",
       account: account!,
-      chain,
+      chain: chainData?.chain,
       args: [parseEther(tokenAmount!)],
     });
 

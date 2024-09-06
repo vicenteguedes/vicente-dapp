@@ -8,7 +8,7 @@ import { Address } from "viem";
 import { useSnackbar } from "notistack";
 
 export default function Admin() {
-  const { account, client, chainData: chain, isOwner } = useClient();
+  const { account, client, chainData, isOwner } = useClient();
   const { enqueueSnackbar } = useSnackbar();
 
   const [toAddress, setToAddress] = useState<Address>();
@@ -25,7 +25,7 @@ export default function Admin() {
         address: account,
         abi: ERC20_ABI,
         functionName: "transferOwnership",
-        chain,
+        chain: chainData?.chain,
         args: [toAddress],
       });
 
@@ -51,7 +51,7 @@ export default function Admin() {
         address: account,
         abi: ERC20_ABI,
         functionName: "renounceOwnership",
-        chain,
+        chain: chainData?.chain,
       });
 
       enqueueSnackbar(`Ownership renounced successfully: TX ${data}`, {
