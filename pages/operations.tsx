@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-import { Address, parseEther } from "viem";
+import { Address, formatEther, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
 import { useSnackbar } from "notistack";
@@ -26,6 +26,22 @@ export default function Operations() {
 
   const [operation, setOperation] = useState<string>("");
 
+  const isDisabled = () => {
+    if (!operation) {
+      return true;
+    }
+
+    if (operation !== "burn" && !toAddress) {
+      return true;
+    }
+
+    if (operation !== "allowance" && !tokenAmount) {
+      return true;
+    }
+
+    return false;
+  };
+
   const handleExecuteOperation = () => {
     switch (operation) {
       case "approve":
@@ -36,6 +52,9 @@ export default function Operations() {
         break;
       case "mint":
         mintTokens();
+        break;
+      case "allowance":
+        checkAllowance();
         break;
       default:
         console.log("Invalid operation selected");
@@ -100,6 +119,27 @@ export default function Operations() {
     });
   };
 
+  const checkAllowance = async () => {
+    if (!client || !chainData || !toAddress) {
+      return;
+    }
+
+    const data = await client.readContract({
+      account: fromAddress || account!,
+      address: chainData.tokens[0].address,
+      abi: ERC20_ABI,
+      functionName: "allowance",
+      args: [fromAddress || account, toAddress],
+    });
+
+    enqueueSnackbar(
+      `Allowance from owner to spender: ${formatEther(data as bigint)} BUSD`,
+      {
+        variant: "success",
+      }
+    );
+  };
+
   return (
     <>
       <NavBar />
@@ -126,6 +166,7 @@ export default function Operations() {
             <MenuItem value="approve">Approve</MenuItem>
             <MenuItem value="burn">Burn</MenuItem>
             <MenuItem value="mint">Mint</MenuItem>
+            <MenuItem value="allowance">Allowance</MenuItem>
           </Select>
           {operation && (
             <>
@@ -157,15 +198,17 @@ export default function Operations() {
                 </>
               )}
 
-              <TextField
-                fullWidth
-                margin="normal"
-                id="amountTo"
-                label="Amount (BUSD)"
-                variant="outlined"
-                value={tokenAmount || ""}
-                onChange={(e) => setTokenAmount(e.target.value)}
-              />
+              {operation !== "allowance" && (
+                <TextField
+                  fullWidth
+                  margin="normal"
+                  id="amountTo"
+                  label="Amount (BUSD)"
+                  variant="outlined"
+                  value={tokenAmount || ""}
+                  onChange={(e) => setTokenAmount(e.target.value)}
+                />
+              )}
 
               <Button
                 variant="contained"
@@ -174,7 +217,7 @@ export default function Operations() {
                 size="large"
                 onClick={() => handleExecuteOperation()}
                 style={{ marginTop: "16px" }}
-                disabled={!tokenAmount || !operation}
+                disabled={isDisabled()}
               >
                 Execute operation
               </Button>
