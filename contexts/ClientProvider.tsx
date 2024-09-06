@@ -120,7 +120,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-export const useClient = () => {
+export const useClient: () => ConnectClientContextProps = () => {
   const context = useContext(ClientContext);
 
   if (context === undefined) {

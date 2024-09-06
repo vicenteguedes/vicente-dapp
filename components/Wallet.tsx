@@ -123,18 +123,12 @@ export default function Wallet() {
           Refresh
         </Button>
 
-        <Typography mt={2} mb={1} variant="body1">{`Account: ${
-          account ? account.slice(0, 6) + "..." + account.slice(-4) : ""
-        } `}</Typography>
-
-        <Typography
-          mb={1}
-          variant="body1"
-        >{`ETH Balance: ${balances.eth} ETH`}</Typography>
-        <Typography
-          mb={1}
-          variant="body1"
-        >{`BUSD Balance: ${balances.busd} BUSD`}</Typography>
+        <Typography mt={2} mb={1} variant="body1">
+          ETH Balance {balances.eth} ETH
+        </Typography>
+        <Typography mb={1} variant="body1">
+          BUSD Balance: {balances.busd} BUSD
+        </Typography>
 
         <Box>
           <Typography variant="body1">{`BUSD total supply: ${busdTotalSupply}`}</Typography>

@@ -1,6 +1,5 @@
 "use client";
 
-import NavBar from "@/components/Navbar";
 import {
   Box,
   Button,
@@ -141,90 +140,85 @@ export default function Operations() {
   };
 
   return (
-    <>
-      <NavBar />
-      <Container>
-        <Typography variant="h4" gutterBottom mt={2} mb={4}>
-          Operations
-        </Typography>
-        <Box component="form" noValidate autoComplete="off" mt={2}>
-          <Select
-            fullWidth
-            value={operation}
-            onChange={(e) => setOperation(e.target.value as string)}
-            displayEmpty
-            renderValue={(selected) => {
-              if (!selected) {
-                return (
-                  <Typography variant="body1">Select operation...</Typography>
-                );
-              }
+    <Container>
+      <Typography variant="h4" gutterBottom mt={2} mb={4}>
+        Operations
+      </Typography>
+      <Box component="form" noValidate autoComplete="off" mt={2}>
+        <Select
+          fullWidth
+          value={operation}
+          onChange={(e) => setOperation(e.target.value as string)}
+          displayEmpty
+          renderValue={(selected) => {
+            if (!selected) {
+              return (
+                <Typography variant="body1">Select operation...</Typography>
+              );
+            }
 
-              return selected.charAt(0).toUpperCase() + selected.slice(1);
-            }}
-          >
-            <MenuItem value="approve">Approve</MenuItem>
-            <MenuItem value="burn">Burn</MenuItem>
-            <MenuItem value="mint">Mint</MenuItem>
-            <MenuItem value="allowance">Allowance</MenuItem>
-          </Select>
-          {operation && (
-            <>
-              {operation !== "burn" && (
-                <>
-                  {operation !== "mint" && (
-                    <TextField
-                      fullWidth
-                      margin="normal"
-                      id="addressFrom"
-                      label="From Address (leave empty to use your account)"
-                      variant="outlined"
-                      value={fromAddress || ""}
-                      placeholder={account || ""}
-                      onChange={(e) =>
-                        setFromAddress(e.target.value as Address)
-                      }
-                    />
-                  )}
+            return selected.charAt(0).toUpperCase() + selected.slice(1);
+          }}
+        >
+          <MenuItem value="approve">Approve</MenuItem>
+          <MenuItem value="burn">Burn</MenuItem>
+          <MenuItem value="mint">Mint</MenuItem>
+          <MenuItem value="allowance">Allowance</MenuItem>
+        </Select>
+        {operation && (
+          <>
+            {operation !== "burn" && (
+              <>
+                {operation !== "mint" && (
                   <TextField
                     fullWidth
                     margin="normal"
-                    id="addressTo"
-                    label="To Address"
+                    id="addressFrom"
+                    label="From Address (leave empty to use your account)"
                     variant="outlined"
-                    value={toAddress || ""}
-                    onChange={(e) => setToAddress(e.target.value as Address)}
+                    value={fromAddress || ""}
+                    placeholder={account || ""}
+                    onChange={(e) => setFromAddress(e.target.value as Address)}
                   />
-                </>
-              )}
-
-              {operation !== "allowance" && (
+                )}
                 <TextField
                   fullWidth
                   margin="normal"
-                  id="amountTo"
-                  label="Amount (BUSD)"
+                  id="addressTo"
+                  label="To Address"
                   variant="outlined"
-                  value={tokenAmount || ""}
-                  onChange={(e) => setTokenAmount(e.target.value)}
+                  value={toAddress || ""}
+                  onChange={(e) => setToAddress(e.target.value as Address)}
                 />
-              )}
+              </>
+            )}
 
-              <Button
-                variant="contained"
-                color="primary"
+            {operation !== "allowance" && (
+              <TextField
                 fullWidth
-                size="large"
-                onClick={() => handleExecuteOperation()}
-                style={{ marginTop: "16px" }}
-                disabled={isDisabled()}
-              >
-                Execute operation
-              </Button>
-            </>
-          )}
-        </Box>
-      </Container>
-    </>
+                margin="normal"
+                id="amountTo"
+                label="Amount (BUSD)"
+                variant="outlined"
+                value={tokenAmount || ""}
+                onChange={(e) => setTokenAmount(e.target.value)}
+              />
+            )}
+
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              size="large"
+              onClick={() => handleExecuteOperation()}
+              style={{ marginTop: "16px" }}
+              disabled={isDisabled()}
+            >
+              Execute operation
+            </Button>
+          </>
+        )}
+      </Box>
+    </Container>
   );
 }

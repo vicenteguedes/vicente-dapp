@@ -1,5 +1,4 @@
 "use client";
-import NavBar from "@/components/Navbar";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
@@ -65,47 +64,44 @@ export default function Admin() {
   };
 
   return (
-    <>
-      <NavBar />
-      <Container>
-        <Typography variant="h4" component="h1" gutterBottom mt={2}>
-          Admin dashboard
-        </Typography>
+    <Container>
+      <Typography variant="h4" component="h1" gutterBottom mt={2}>
+        Admin dashboard
+      </Typography>
 
-        <Box component="form" noValidate autoComplete="off" mt={2}>
-          <TextField
-            fullWidth
-            margin="normal"
-            id="addressTo"
-            label="Transfer ownership to address"
-            variant="outlined"
-            value={toAddress || ""}
-            onChange={(e) => setToAddress(e.target.value as Address)}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            onClick={() => transferOwnership()}
-            style={{ marginTop: "16px" }}
-            disabled={!isOwner || !toAddress}
-          >
-            Transfer ownership
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            onClick={() => renounceOwnership()}
-            style={{ marginTop: "16px" }}
-            disabled={!isOwner}
-          >
-            Renounce ownership
-          </Button>
-        </Box>
-      </Container>
-    </>
+      <Box component="form" noValidate autoComplete="off" mt={2}>
+        <TextField
+          fullWidth
+          margin="normal"
+          id="addressTo"
+          label="Transfer ownership to address"
+          variant="outlined"
+          value={toAddress || ""}
+          onChange={(e) => setToAddress(e.target.value as Address)}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          size="large"
+          onClick={() => transferOwnership()}
+          style={{ marginTop: "16px" }}
+          disabled={!isOwner || !toAddress}
+        >
+          Transfer ownership
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          size="large"
+          onClick={() => renounceOwnership()}
+          style={{ marginTop: "16px" }}
+          disabled={!isOwner}
+        >
+          Renounce ownership
+        </Button>
+      </Box>
+    </Container>
   );
 }

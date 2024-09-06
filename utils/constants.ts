@@ -1,6 +1,7 @@
-export const ETH_DEAD_ADDRESS = "0x000000000000000000000000000000000000dead";
 import { Address, Chain } from "viem";
 import { sepolia, mainnet } from "viem/chains";
+
+export const ETH_DEAD_ADDRESS = "0x000000000000000000000000000000000000dead";
 
 export interface ChainData {
   id: number;
