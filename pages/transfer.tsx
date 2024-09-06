@@ -1,5 +1,4 @@
 "use client";
-import NavBar from "@/components/Navbar";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
@@ -64,54 +63,51 @@ export default function Transfer() {
   }, [hash]);
 
   return (
-    <>
-      <NavBar />
-      <Container>
-        <Typography variant="h4" gutterBottom mt={2}>
+    <Container>
+      <Typography variant="h4" gutterBottom mt={2}>
+        Transfer tokens
+      </Typography>
+      <Box component="form" noValidate autoComplete="off" mt={2}>
+        <TextField
+          fullWidth
+          margin="normal"
+          id="addressFrom"
+          label="From Address (leave empty to use your account)"
+          variant="outlined"
+          value={fromAddress || ""}
+          placeholder={account || ""}
+          onChange={(e) => setFromAddress(e.target.value as Address)}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          id="addressTo"
+          label="To Address"
+          variant="outlined"
+          value={toAddress || ""}
+          onChange={(e) => setToAddress(e.target.value as Address)}
+        />
+        <TextField
+          fullWidth
+          margin="normal"
+          id="amountTo"
+          label="Amount (BUSD)"
+          variant="outlined"
+          value={ethAmount || ""}
+          onChange={(e) => setEthAmount(e.target.value)}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          fullWidth
+          size="large"
+          onClick={() => transferTokens()}
+          style={{ marginTop: "16px" }}
+          disabled={!toAddress || !ethAmount}
+        >
           Transfer tokens
-        </Typography>
-        <Box component="form" noValidate autoComplete="off" mt={2}>
-          <TextField
-            fullWidth
-            margin="normal"
-            id="addressFrom"
-            label="From Address (leave empty to use your account)"
-            variant="outlined"
-            value={fromAddress || ""}
-            placeholder={account || ""}
-            onChange={(e) => setFromAddress(e.target.value as Address)}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            id="addressTo"
-            label="To Address"
-            variant="outlined"
-            value={toAddress || ""}
-            onChange={(e) => setToAddress(e.target.value as Address)}
-          />
-          <TextField
-            fullWidth
-            margin="normal"
-            id="amountTo"
-            label="Amount (BUSD)"
-            variant="outlined"
-            value={ethAmount || ""}
-            onChange={(e) => setEthAmount(e.target.value)}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            size="large"
-            onClick={() => transferTokens()}
-            style={{ marginTop: "16px" }}
-            disabled={!toAddress || !ethAmount}
-          >
-            Transfer tokens
-          </Button>
-        </Box>
-      </Container>
-    </>
+        </Button>
+      </Box>
+    </Container>
   );
 }
