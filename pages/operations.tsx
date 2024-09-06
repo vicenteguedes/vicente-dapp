@@ -13,15 +13,11 @@ import {
 import { useState } from "react";
 import { Address, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
-import {
-  BUSD_ADDRESS,
-  BUSD_TOKEN_ABI,
-  ETH_DEAD_ADDRESS,
-} from "@/utils/constants";
+import { ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
 import { useSnackbar } from "notistack";
 
 export default function Operations() {
-  const { account, client, chain } = useClient();
+  const { account, client, chainData } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -47,21 +43,17 @@ export default function Operations() {
   };
 
   const approveTokens = async () => {
-    if (!client) {
-      return;
-    }
-
-    if (!toAddress) {
+    if (!client || !chainData || !toAddress) {
       return;
     }
 
     const data = await client.writeContract({
       account: fromAddress || account!,
-      address: BUSD_ADDRESS,
-      abi: BUSD_TOKEN_ABI,
+      address: chainData.tokens[0].address,
+      abi: ERC20_ABI,
       functionName: "approve",
       args: [toAddress, parseEther(tokenAmount!)],
-      chain,
+      chain: chainData?.chain,
     });
 
     enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
@@ -70,16 +62,18 @@ export default function Operations() {
   };
 
   const burnTokens = async () => {
-    if (!client || !tokenAmount) {
+    if (!client || !tokenAmount || !chainData) {
       return;
     }
 
     // transfer to dead address
-    const hash = await client.sendTransaction({
-      account: (fromAddress || account) as Address,
-      to: ETH_DEAD_ADDRESS,
-      value: parseEther(tokenAmount),
-      chain,
+    const hash = await client.writeContract({
+      address: chainData.tokens[0].address,
+      chain: chainData.chain,
+      account: account!,
+      abi: ERC20_ABI,
+      functionName: "transfer",
+      args: [ETH_DEAD_ADDRESS, parseEther(tokenAmount)],
     });
 
     enqueueSnackbar(`Tokens burned successfully: ${hash}`, {
@@ -88,16 +82,16 @@ export default function Operations() {
   };
 
   const mintTokens = async () => {
-    if (!client) {
+    if (!client || !chainData) {
       return;
     }
 
     await client.writeContract({
-      address: BUSD_ADDRESS,
-      abi: BUSD_TOKEN_ABI,
+      address: chainData.tokens[0].address,
+      abi: ERC20_ABI,
       functionName: "mint",
       account: account!,
-      chain,
+      chain: chainData?.chain,
       args: [parseEther(tokenAmount!)],
     });
 
@@ -167,7 +161,7 @@ export default function Operations() {
                 fullWidth
                 margin="normal"
                 id="amountTo"
-                label="Amount (ETH)"
+                label="Amount (BUSD)"
                 variant="outlined"
                 value={tokenAmount || ""}
                 onChange={(e) => setTokenAmount(e.target.value)}

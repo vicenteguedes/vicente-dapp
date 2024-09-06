@@ -3,12 +3,12 @@ import NavBar from "@/components/Navbar";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
-import { BUSD_TOKEN_ABI } from "@/utils/constants";
+import { ERC20_ABI } from "@/utils/constants";
 import { Address } from "viem";
 import { useSnackbar } from "notistack";
 
 export default function Admin() {
-  const { account, client, chain, isOwner } = useClient();
+  const { account, client, chainData, isOwner } = useClient();
   const { enqueueSnackbar } = useSnackbar();
 
   const [toAddress, setToAddress] = useState<Address>();
@@ -23,9 +23,9 @@ export default function Admin() {
       const data = await client.writeContract({
         account: account!,
         address: account,
-        abi: BUSD_TOKEN_ABI,
+        abi: ERC20_ABI,
         functionName: "transferOwnership",
-        chain,
+        chain: chainData?.chain,
         args: [toAddress],
       });
 
@@ -49,9 +49,9 @@ export default function Admin() {
       const data = await client.writeContract({
         account: account!,
         address: account,
-        abi: BUSD_TOKEN_ABI,
+        abi: ERC20_ABI,
         functionName: "renounceOwnership",
-        chain,
+        chain: chainData?.chain,
       });
 
       enqueueSnackbar(`Ownership renounced successfully: TX ${data}`, {

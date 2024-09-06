@@ -5,11 +5,12 @@ import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
+import { ERC20_ABI } from "@/utils/constants";
 
 const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
 
 export default function Transfer() {
-  const { account, client, chain } = useClient();
+  const { account, client, chainData } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -19,7 +20,7 @@ export default function Transfer() {
 
   const transferTokens = async () => {
     try {
-      if (!account || !client) {
+      if (!account || !client || !chainData) {
         console.log("Account or client not defined");
         return;
       }
@@ -29,11 +30,13 @@ export default function Transfer() {
         return;
       }
 
-      const hash = await client.sendTransaction({
+      const hash = await client.writeContract({
+        address: chainData.tokens[0].address,
+        chain: chainData.chain,
         account: fromAddress || account,
-        to: toAddress,
-        value: parseEther(ethAmount),
-        chain,
+        abi: ERC20_ABI,
+        functionName: fromAddress ? "transferFrom" : "transfer",
+        args: [fromAddress, toAddress, parseEther(ethAmount)].filter(Boolean),
       });
 
       setHash(hash);
@@ -91,7 +94,7 @@ export default function Transfer() {
             fullWidth
             margin="normal"
             id="amountTo"
-            label="Amount (ETH)"
+            label="Amount (BUSD)"
             variant="outlined"
             value={ethAmount || ""}
             onChange={(e) => setEthAmount(e.target.value)}
