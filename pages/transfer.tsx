@@ -9,7 +9,7 @@ import { useSnackbar } from "notistack";
 const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
 
 export default function Transfer() {
-  const { account, client, chain } = useClient();
+  const { account, client, chainData: chain } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -33,7 +33,7 @@ export default function Transfer() {
         account: fromAddress || account,
         to: toAddress,
         value: parseEther(ethAmount),
-        chain,
+        chain: chain?.chain,
       });
 
       setHash(hash);

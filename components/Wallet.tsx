@@ -4,10 +4,10 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { useClient } from "@/contexts/ClientProvider";
 import { useEffect, useState } from "react";
 import { formatEther, PublicActions } from "viem";
-import { BUSD_ADDRESS, BUSD_TOKEN_ABI } from "@/utils/constants";
+import { ERC20_ABI } from "@/utils/constants";
 
 export default function Wallet() {
-  const { account, connect, providers, getClient } = useClient();
+  const { account, connect, providers, getClient, chainData } = useClient();
   const [balances, setBalances] = useState({ eth: "0", busd: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
 
@@ -16,9 +16,13 @@ export default function Wallet() {
   };
 
   const getBUSDBalance = async (client: PublicActions) => {
+    if (!chainData) {
+      return 0;
+    }
+
     const busdBalance = await client.readContract({
-      address: BUSD_ADDRESS,
-      abi: BUSD_TOKEN_ABI,
+      address: chainData.tokens[0].address,
+      abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [account],
     });
@@ -50,14 +54,14 @@ export default function Wallet() {
 
   const getTotalSupply = async () => {
     try {
-      if (!account) {
+      if (!account || !chainData) {
         return;
       }
       const client = getClient();
 
       const busdSupply = await client.readContract({
-        address: BUSD_ADDRESS,
-        abi: BUSD_TOKEN_ABI,
+        address: chainData.tokens[0].address,
+        abi: ERC20_ABI,
         functionName: "totalSupply",
       });
 
@@ -72,7 +76,7 @@ export default function Wallet() {
       getBalances();
       getTotalSupply();
     }
-  }, [account]);
+  }, [account, chainData]);
 
   useEffect(() => {
     const interval = setInterval(async () => {

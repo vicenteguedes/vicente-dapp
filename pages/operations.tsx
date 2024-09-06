@@ -13,15 +13,11 @@ import {
 import { useState } from "react";
 import { Address, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
-import {
-  BUSD_ADDRESS,
-  BUSD_TOKEN_ABI,
-  ETH_DEAD_ADDRESS,
-} from "@/utils/constants";
+import { BUSD_ADDRESS, ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
 import { useSnackbar } from "notistack";
 
 export default function Operations() {
-  const { account, client, chain } = useClient();
+  const { account, client, chainData: chain } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -58,7 +54,7 @@ export default function Operations() {
     const data = await client.writeContract({
       account: fromAddress || account!,
       address: BUSD_ADDRESS,
-      abi: BUSD_TOKEN_ABI,
+      abi: ERC20_ABI,
       functionName: "approve",
       args: [toAddress, parseEther(tokenAmount!)],
       chain,
@@ -94,7 +90,7 @@ export default function Operations() {
 
     await client.writeContract({
       address: BUSD_ADDRESS,
-      abi: BUSD_TOKEN_ABI,
+      abi: ERC20_ABI,
       functionName: "mint",
       account: account!,
       chain,

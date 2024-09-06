@@ -10,8 +10,7 @@ import {
   PublicActions,
   WalletActions,
 } from "viem";
-import * as chains from "viem/chains";
-import { BUSD_ADDRESS, BUSD_TOKEN_ABI } from "@/utils/constants";
+import { ChainData, CHAINS, ERC20_ABI } from "@/utils/constants";
 
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
@@ -19,7 +18,7 @@ interface ConnectClientContextProps {
   account: Address | null;
   providers: EIP6963ProviderDetail[];
   getClient: () => PublicActions & WalletActions;
-  chain: chains.Chain | null;
+  chainData: ChainData | null;
   isOwner: boolean;
 }
 
@@ -34,7 +33,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   const [client, setClient] = useState<(PublicActions & WalletActions) | null>(
     null
   );
-  const [chain, setChain] = useState<chains.Chain | null>(null);
+  const [chainData, setChainData] = useState<ChainData | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
   const providers = useSyncProviders();
@@ -63,6 +62,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
     }).extend(publicActions);
 
     setClient(newClient);
+
     return newClient;
   };
 
@@ -73,20 +73,22 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const chainId = await client.getChainId();
 
-    const chain = Object.values(chains).find((x) => x.id === chainId);
+    const chainData = Object.values(CHAINS).find((x) => x.id === chainId);
 
-    if (chain) {
-      await client.switchChain({ id: chainId });
-      setChain(chain);
+    if (!chainData) {
+      return;
     }
+
+    setChainData(chainData);
 
     const owner = await client
       .readContract({
-        address: BUSD_ADDRESS,
-        abi: BUSD_TOKEN_ABI,
+        address: chainData.tokens[0].address,
+        abi: ERC20_ABI,
         functionName: "getOwner",
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Failed to get owner:", error);
         return undefined;
       });
 
@@ -109,7 +111,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
         client,
         providers,
         getClient,
-        chain,
+        chainData,
         isOwner,
       }}
     >
