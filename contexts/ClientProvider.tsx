@@ -6,6 +6,7 @@ import {
   Address,
   createWalletClient,
   custom,
+  formatEther,
   publicActions,
   PublicActions,
   WalletActions,
@@ -20,6 +21,9 @@ interface ConnectClientContextProps {
   getClient: () => PublicActions & WalletActions;
   chainData: ChainData | null;
   isOwner: boolean;
+  balances: { eth: string; busd: string };
+  refreshBalances: () => Promise<void>;
+  busdTotalSupply: string;
 }
 
 const ClientContext = createContext<ConnectClientContextProps | undefined>(
@@ -35,6 +39,83 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [chainData, setChainData] = useState<ChainData | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [balances, setBalances] = useState({ eth: "0", busd: "0" });
+  const [busdTotalSupply, setBusdTotalSupply] = useState("0");
+
+  const formatCurrency = (value: unknown) => {
+    return Number(formatEther(value as bigint)).toFixed(6);
+  };
+
+  const getBUSDBalance = async (client: PublicActions) => {
+    if (!chainData) {
+      return 0;
+    }
+
+    const busdBalance = await client.readContract({
+      address: chainData.tokens[0].address,
+      abi: ERC20_ABI,
+      functionName: "balanceOf",
+      args: [account],
+    });
+
+    return formatCurrency(busdBalance);
+  };
+
+  const refreshBalances = async () => {
+    try {
+      if (!account) {
+        return;
+      }
+      const client = getClient();
+
+      const ethBalance = await client.getBalance({
+        address: account,
+      });
+
+      const busdBalance = await getBUSDBalance(client);
+
+      setBalances({
+        eth: formatCurrency(ethBalance).toString(),
+        busd: busdBalance.toString(),
+      });
+    } catch (error) {
+      console.error("Failed to get balances:", error);
+    }
+  };
+
+  const getTotalSupply = async () => {
+    try {
+      if (!account || !chainData) {
+        return;
+      }
+      const client = getClient();
+
+      const busdSupply = await client.readContract({
+        address: chainData.tokens[0].address,
+        abi: ERC20_ABI,
+        functionName: "totalSupply",
+      });
+
+      setBusdTotalSupply(formatCurrency(busdSupply));
+    } catch (error) {
+      console.error("Failed to get supply:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (account) {
+      refreshBalances();
+      getTotalSupply();
+    }
+  }, [account, chainData]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      await refreshBalances();
+    }, 60000); // 60 seconds interval
+
+    return () => clearInterval(interval);
+  }, [refreshBalances]);
 
   const providers = useSyncProviders();
 
@@ -113,6 +194,9 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
         getClient,
         chainData,
         isOwner,
+        balances,
+        refreshBalances,
+        busdTotalSupply,
       }}
     >
       {children}

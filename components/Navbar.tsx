@@ -8,12 +8,13 @@ import CurrencyExchange from "@mui/icons-material/CurrencyExchange";
 import Link from "next/link";
 import { useClient } from "@/contexts/ClientProvider";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { Tooltip } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { IconButton, Tooltip } from "@mui/material";
 
 const CLIENT_PAGES = ["Transfer", "Operations", "Admin"];
 
 function NavBar() {
-  const { account } = useClient();
+  const { account, refreshBalances, providers } = useClient();
 
   return (
     <AppBar position="static" style={{ marginBottom: 10 }}>
@@ -64,8 +65,27 @@ function NavBar() {
               sx={{ display: "flex", justifyContent: "flex-end" }}
               alignItems={"center"}
             >
+              <Tooltip title={`Provider: ${providers[0].info.name}`}>
+                <img
+                  src={providers[0].info.icon}
+                  alt={providers[0].info.name}
+                  style={{ width: 20, height: 20, marginRight: 10 }}
+                />
+              </Tooltip>
+
+              <Tooltip title="Refresh information">
+                <IconButton
+                  onClick={refreshBalances}
+                  sx={{
+                    display: { xs: "none", md: "flex", color: "white" },
+                    mr: 1,
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
               <AccountBalanceWalletIcon
-                sx={{ display: { xs: "none", md: "flex" }, mr: 1 }}
+                sx={{ display: { xs: "none", md: "flex" } }}
               />
               <Tooltip title="Click to copy">
                 <Button

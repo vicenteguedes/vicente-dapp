@@ -3,7 +3,6 @@
 import {
   Box,
   Button,
-  Container,
   MenuItem,
   Select,
   TextField,
@@ -25,12 +24,12 @@ export default function Operations() {
 
   const [operation, setOperation] = useState<string>("");
 
-  const isDisabled = () => {
+  const isExecuteDisabled = () => {
     if (!operation) {
       return true;
     }
 
-    if (operation !== "burn" && !toAddress) {
+    if (operation !== "burn" && operation !== "mint" && !toAddress) {
       return true;
     }
 
@@ -139,12 +138,110 @@ export default function Operations() {
     );
   };
 
+  const renderFields = () => {
+    switch (operation) {
+      case "approve":
+        return (
+          <>
+            <TextField
+              fullWidth
+              margin="normal"
+              id="addressTo"
+              label="To Address"
+              variant="outlined"
+              value={toAddress || ""}
+              onChange={(e) => setToAddress(e.target.value as Address)}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              id="amountTo"
+              label="Amount (BUSD)"
+              variant="outlined"
+              value={tokenAmount || ""}
+              onChange={(e) => setTokenAmount(e.target.value)}
+            />
+          </>
+        );
+      case "burn":
+        return (
+          <TextField
+            fullWidth
+            margin="normal"
+            id="amountTo"
+            label="Amount (BUSD)"
+            variant="outlined"
+            value={tokenAmount || ""}
+            onChange={(e) => setTokenAmount(e.target.value)}
+          />
+        );
+      case "mint":
+        return (
+          <TextField
+            fullWidth
+            margin="normal"
+            id="amountTo"
+            label="Amount (BUSD)"
+            variant="outlined"
+            value={tokenAmount || ""}
+            onChange={(e) => setTokenAmount(e.target.value)}
+          />
+        );
+      case "allowance":
+        return (
+          <>
+            <TextField
+              fullWidth
+              margin="normal"
+              id="addressFrom"
+              label="Owner Address"
+              variant="outlined"
+              value={fromAddress || ""}
+              onChange={(e) => setFromAddress(e.target.value as Address)}
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              id="addressTo"
+              label="Spender Address"
+              variant="outlined"
+              value={toAddress || ""}
+              onChange={(e) => setToAddress(e.target.value as Address)}
+            />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getExecuteOperationText = () => {
+    switch (operation) {
+      case "approve":
+        return "Approve";
+      case "burn":
+        return "Burn";
+      case "mint":
+        return "Mint";
+      case "allowance":
+        return "Check Allowance";
+      default:
+        return "Execute";
+    }
+  };
+
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom mt={2} mb={4}>
+    <Box>
+      <Typography variant="h4" mt={2} mb={4}>
         Operations
       </Typography>
-      <Box component="form" noValidate autoComplete="off" mt={2}>
+      <Box
+        component="form"
+        noValidate
+        autoComplete="off"
+        mt={2}
+        textAlign={"left"}
+      >
         <Select
           fullWidth
           value={operation}
@@ -167,44 +264,7 @@ export default function Operations() {
         </Select>
         {operation && (
           <>
-            {operation !== "burn" && (
-              <>
-                {operation !== "mint" && (
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    id="addressFrom"
-                    label="From Address (leave empty to use your account)"
-                    variant="outlined"
-                    value={fromAddress || ""}
-                    placeholder={account || ""}
-                    onChange={(e) => setFromAddress(e.target.value as Address)}
-                  />
-                )}
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  id="addressTo"
-                  label="To Address"
-                  variant="outlined"
-                  value={toAddress || ""}
-                  onChange={(e) => setToAddress(e.target.value as Address)}
-                />
-              </>
-            )}
-
-            {operation !== "allowance" && (
-              <TextField
-                fullWidth
-                margin="normal"
-                id="amountTo"
-                label="Amount (BUSD)"
-                variant="outlined"
-                value={tokenAmount || ""}
-                onChange={(e) => setTokenAmount(e.target.value)}
-              />
-            )}
-
+            {renderFields()}
             <Button
               variant="contained"
               color="primary"
@@ -212,13 +272,13 @@ export default function Operations() {
               size="large"
               onClick={() => handleExecuteOperation()}
               style={{ marginTop: "16px" }}
-              disabled={isDisabled()}
+              disabled={isExecuteDisabled()}
             >
-              Execute operation
+              {getExecuteOperationText()}
             </Button>
           </>
         )}
       </Box>
-    </Container>
+    </Box>
   );
 }
