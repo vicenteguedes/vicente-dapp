@@ -14,7 +14,7 @@ import { IconButton, Tooltip } from "@mui/material";
 const CLIENT_PAGES = ["Transfer", "Operations", "Admin"];
 
 function NavBar() {
-  const { account, refreshBalances, providers } = useClient();
+  const { account, refreshBalances, providerInfo } = useClient();
 
   return (
     <AppBar position="static" style={{ marginBottom: 10 }}>
@@ -65,10 +65,10 @@ function NavBar() {
               sx={{ display: "flex", justifyContent: "flex-end" }}
               alignItems={"center"}
             >
-              <Tooltip title={`Provider: ${providers[0].info.name}`}>
+              <Tooltip title={`Provider: ${providerInfo.name}`}>
                 <img
-                  src={providers[0].info.icon}
-                  alt={providers[0].info.name}
+                  src={providerInfo.icon}
+                  alt={providerInfo.name}
                   style={{ width: 20, height: 20, marginRight: 10 }}
                 />
               </Tooltip>

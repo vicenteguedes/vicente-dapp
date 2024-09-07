@@ -2,12 +2,12 @@
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
-import { ERC20_ABI } from "@/utils/constants";
+import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 import { Address } from "viem";
 import { useSnackbar } from "notistack";
 
 export default function Admin() {
-  const { account, client, chainData, isOwner } = useClient();
+  const { account, client, isOwner } = useClient();
   const { enqueueSnackbar } = useSnackbar();
 
   const [toAddress, setToAddress] = useState<Address>();
@@ -24,7 +24,7 @@ export default function Admin() {
         address: account,
         abi: ERC20_ABI,
         functionName: "transferOwnership",
-        chain: chainData?.chain,
+        chain: SEPOLIA_DATA.chain,
         args: [toAddress],
       });
 
@@ -50,7 +50,7 @@ export default function Admin() {
         address: account,
         abi: ERC20_ABI,
         functionName: "renounceOwnership",
-        chain: chainData?.chain,
+        chain: SEPOLIA_DATA.chain,
       });
 
       enqueueSnackbar(`Ownership renounced successfully: TX ${data}`, {

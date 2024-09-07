@@ -11,11 +11,11 @@ import {
 import { useState } from "react";
 import { Address, formatEther, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
-import { ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
+import { ERC20_ABI, ETH_DEAD_ADDRESS, SEPOLIA_DATA } from "@/utils/constants";
 import { useSnackbar } from "notistack";
 
 export default function Operations() {
-  const { account, client, chainData } = useClient();
+  const { account, client } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -60,17 +60,17 @@ export default function Operations() {
   };
 
   const approveTokens = async () => {
-    if (!client || !chainData || !toAddress) {
+    if (!client || !toAddress) {
       return;
     }
 
     const data = await client.writeContract({
       account: fromAddress || account!,
-      address: chainData.tokens[0].address,
+      address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "approve",
       args: [toAddress, parseEther(tokenAmount!)],
-      chain: chainData?.chain,
+      chain: SEPOLIA_DATA?.chain,
     });
 
     enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
@@ -79,14 +79,14 @@ export default function Operations() {
   };
 
   const burnTokens = async () => {
-    if (!client || !tokenAmount || !chainData) {
+    if (!client || !tokenAmount) {
       return;
     }
 
     // transfer to dead address
     const hash = await client.writeContract({
-      address: chainData.tokens[0].address,
-      chain: chainData.chain,
+      address: SEPOLIA_DATA.tokens[0].address,
+      chain: SEPOLIA_DATA.chain,
       account: account!,
       abi: ERC20_ABI,
       functionName: "transfer",
@@ -99,16 +99,16 @@ export default function Operations() {
   };
 
   const mintTokens = async () => {
-    if (!client || !chainData) {
+    if (!client) {
       return;
     }
 
     await client.writeContract({
-      address: chainData.tokens[0].address,
+      address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "mint",
       account: account!,
-      chain: chainData?.chain,
+      chain: SEPOLIA_DATA?.chain,
       args: [parseEther(tokenAmount!)],
     });
 
@@ -118,13 +118,13 @@ export default function Operations() {
   };
 
   const checkAllowance = async () => {
-    if (!client || !chainData || !toAddress) {
+    if (!client || !toAddress) {
       return;
     }
 
     const data = await client.readContract({
       account: fromAddress || account!,
-      address: chainData.tokens[0].address,
+      address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "allowance",
       args: [fromAddress || account, toAddress],
