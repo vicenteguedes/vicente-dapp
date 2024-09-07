@@ -1,5 +1,5 @@
 "use client";
-import { Box, Button, Container, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
 import { ERC20_ABI } from "@/utils/constants";
@@ -64,7 +64,7 @@ export default function Admin() {
   };
 
   return (
-    <Container>
+    <Box>
       <Typography variant="h4" component="h1" gutterBottom mt={2}>
         Admin dashboard
       </Typography>
@@ -102,6 +102,6 @@ export default function Admin() {
           Renounce ownership
         </Button>
       </Box>
-    </Container>
+    </Box>
   );
 }

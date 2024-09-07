@@ -1,10 +1,11 @@
 "use client";
-import { Box, Button, Container, TextField, Typography } from "@mui/material";
+import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
 import { ERC20_ABI } from "@/utils/constants";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
 
@@ -50,20 +51,21 @@ export default function Transfer() {
   };
 
   useEffect(() => {
-    (async () => {
-      if (hash) {
-        const receipt = await client!.waitForTransactionReceipt({ hash });
-
+    if (client && hash) {
+      client.waitForTransactionReceipt({ hash }).then((receipt) => {
+        console.log(receipt);
         enqueueSnackbar(
           `Transaction sent successfully! ${SEPOLIA_TX_BASE_URL}/${receipt.transactionHash}`,
           { variant: "success", autoHideDuration: 10000 }
         );
-      }
-    })();
+
+        setHash(undefined);
+      });
+    }
   }, [hash]);
 
   return (
-    <Container>
+    <Box>
       <Typography variant="h4" gutterBottom mt={2}>
         Transfer tokens
       </Typography>
@@ -96,6 +98,11 @@ export default function Transfer() {
           value={ethAmount || ""}
           onChange={(e) => setEthAmount(e.target.value)}
         />
+        {hash && (
+          <Tooltip title="Transaction being confirmed...">
+            <CircularProgress />
+          </Tooltip>
+        )}
         <Button
           variant="contained"
           color="primary"
@@ -108,6 +115,6 @@ export default function Transfer() {
           Transfer tokens
         </Button>
       </Box>
-    </Container>
+    </Box>
   );
 }
