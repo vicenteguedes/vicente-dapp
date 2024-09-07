@@ -11,15 +11,14 @@ import {
   PublicActions,
   WalletActions,
 } from "viem";
-import { ChainData, CHAINS, ERC20_ABI } from "@/utils/constants";
+import { ChainData, SEPOLIA_DATA, ERC20_ABI } from "@/utils/constants";
 
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
   client: (PublicActions & WalletActions) | null;
   account: Address | null;
-  providers: EIP6963ProviderDetail[];
+  providerInfo: EIP6963ProviderInfo;
   getClient: () => PublicActions & WalletActions;
-  chainData: ChainData | null;
   isOwner: boolean;
   balances: { eth: string; busd: string };
   refreshBalances: () => Promise<void>;
@@ -37,7 +36,6 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   const [client, setClient] = useState<(PublicActions & WalletActions) | null>(
     null
   );
-  const [chainData, setChainData] = useState<ChainData | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [balances, setBalances] = useState({ eth: "0", busd: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
@@ -47,12 +45,8 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const getBUSDBalance = async (client: PublicActions) => {
-    if (!chainData) {
-      return 0;
-    }
-
     const busdBalance = await client.readContract({
-      address: chainData.tokens[0].address,
+      address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "balanceOf",
       args: [account],
@@ -85,13 +79,13 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const getTotalSupply = async () => {
     try {
-      if (!account || !chainData) {
+      if (!account) {
         return;
       }
       const client = getClient();
 
       const busdSupply = await client.readContract({
-        address: chainData.tokens[0].address,
+        address: SEPOLIA_DATA.tokens[0].address,
         abi: ERC20_ABI,
         functionName: "totalSupply",
       });
@@ -107,7 +101,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
       refreshBalances();
       getTotalSupply();
     }
-  }, [account, chainData]);
+  }, [account]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -117,10 +111,10 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => clearInterval(interval);
   }, [refreshBalances]);
 
-  const providers = useSyncProviders();
+  const [providerWithDetail] = useSyncProviders();
 
-  const getClient = () => {
-    if (client) {
+  const getClient = (forceRefresh?: boolean) => {
+    if (client && !forceRefresh) {
       return client;
     }
 
@@ -134,7 +128,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
       transport = custom(window.ethereum);
     } else {
       const errorMessage =
-        "MetaMask or another web3 wallet is not installed. Please install one to proceed.";
+        "Neither MetaMask nor any other web3 wallet is installed. Please install one to proceed.";
       throw new Error(errorMessage);
     }
 
@@ -147,24 +141,27 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
     return newClient;
   };
 
-  const connect = async () => {
-    const client = getClient();
+  const connect = async (forceRefresh?: boolean) => {
+    const client = getClient(forceRefresh);
+    const chainId = await client.getChainId();
+
+    if (chainId !== SEPOLIA_DATA.chainId) {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [
+          {
+            chainId: SEPOLIA_DATA.hexChainId,
+          },
+        ],
+      });
+    }
+
     const [address] = await client.requestAddresses();
     setAccount(address);
 
-    const chainId = await client.getChainId();
-
-    const chainData = Object.values(CHAINS).find((x) => x.id === chainId);
-
-    if (!chainData) {
-      return;
-    }
-
-    setChainData(chainData);
-
     const owner = await client
       .readContract({
-        address: chainData.tokens[0].address,
+        address: SEPOLIA_DATA.tokens[0].address,
         abi: ERC20_ABI,
         functionName: "getOwner",
       })
@@ -177,12 +174,33 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (client && providers.length) {
-      providers[0].provider.on("chainChanged", async () => {
-        window.location.reload();
+    if (client && providerWithDetail) {
+      providerWithDetail.provider.on("chainChanged", async () => {
+        const chainId = await client.getChainId();
+
+        if (chainId === SEPOLIA_DATA.chainId) {
+          return;
+        }
+
+        setClient(null);
+        setAccount(null);
+
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [
+            {
+              chainId: SEPOLIA_DATA.hexChainId,
+            },
+          ],
+        });
+
+        await connect(true);
+      });
+      providerWithDetail.provider.on("accountsChanged", async () => {
+        await connect(true);
       });
     }
-  }, [client, providers]);
+  }, [client, providerWithDetail]);
 
   return (
     <ClientContext.Provider
@@ -190,9 +208,8 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
         account,
         connect,
         client,
-        providers,
+        providerInfo: providerWithDetail?.info,
         getClient,
-        chainData,
         isOwner,
         balances,
         refreshBalances,

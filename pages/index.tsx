@@ -3,10 +3,9 @@ import { Box, Button, Typography } from "@mui/material";
 import { useClient } from "@/contexts/ClientProvider";
 
 export default function HomePage() {
-  const { account, connect, providers, balances, busdTotalSupply } =
-    useClient();
+  const { account, connect, balances, busdTotalSupply } = useClient();
 
-  if (!account || !providers.length) {
+  if (!account) {
     return (
       <Box mt={6}>
         <Button variant="contained" onClick={connect}>

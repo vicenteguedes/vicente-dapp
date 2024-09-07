@@ -4,13 +4,15 @@ import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
-import { ERC20_ABI } from "@/utils/constants";
+import {
+  ERC20_ABI,
+  SEPOLIA_DATA,
+  SEPOLIA_TX_BASE_URL,
+} from "@/utils/constants";
 import CircularProgress from "@mui/material/CircularProgress";
 
-const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
-
 export default function Transfer() {
-  const { account, client, chainData } = useClient();
+  const { account, client } = useClient();
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
@@ -20,7 +22,7 @@ export default function Transfer() {
 
   const transferTokens = async () => {
     try {
-      if (!account || !client || !chainData) {
+      if (!account || !client) {
         console.log("Account or client not defined");
         return;
       }
@@ -31,8 +33,8 @@ export default function Transfer() {
       }
 
       const hash = await client.writeContract({
-        address: chainData.tokens[0].address,
-        chain: chainData.chain,
+        address: SEPOLIA_DATA.tokens[0].address,
+        chain: SEPOLIA_DATA.chain,
         account: fromAddress || account,
         abi: ERC20_ABI,
         functionName: fromAddress ? "transferFrom" : "transfer",

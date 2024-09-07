@@ -2,37 +2,27 @@ import { Address, Chain } from "viem";
 import { sepolia, mainnet } from "viem/chains";
 
 export const ETH_DEAD_ADDRESS = "0x000000000000000000000000000000000000dead";
+export const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
 
 export interface ChainData {
-  id: number;
+  chainId: number;
+  hexChainId: string;
   name: string;
   tokens: { name: string; address: Address }[];
   chain: Chain;
 }
 
-export const CHAINS: { [key: string]: ChainData } = {
-  baseSepolia: {
-    id: 11155111,
-    name: "Base Sepolia",
-    tokens: [
-      {
-        name: "BUSD",
-        address: "0x6A7577c10cD3F595eB2dbB71331D7Bf7223E1Aac",
-      },
-    ],
-    chain: sepolia,
-  },
-  mainnet: {
-    id: 1,
-    name: "Mainnet",
-    tokens: [
-      {
-        name: "BUSD",
-        address: "0x4Fabb145d64652a948d72533023f6E7A623C7C53",
-      },
-    ],
-    chain: mainnet,
-  },
+export const SEPOLIA_DATA: ChainData = {
+  chainId: 11155111,
+  hexChainId: "0xAA36A7",
+  name: "Base Sepolia",
+  tokens: [
+    {
+      name: "BUSD",
+      address: "0x6A7577c10cD3F595eB2dbB71331D7Bf7223E1Aac",
+    },
+  ],
+  chain: sepolia,
 };
 
 export const ERC20_ABI = [
