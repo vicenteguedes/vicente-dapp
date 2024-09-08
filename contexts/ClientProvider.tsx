@@ -11,7 +11,8 @@ import {
   PublicActions,
   WalletActions,
 } from "viem";
-import { ChainData, SEPOLIA_DATA, ERC20_ABI } from "@/utils/constants";
+import { SEPOLIA_DATA, ERC20_ABI } from "@/utils/constants";
+import { enqueueSnackbar } from "notistack";
 
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
@@ -40,8 +41,11 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   const [balances, setBalances] = useState({ eth: "0", busd: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
 
-  const formatCurrency = (value: unknown) => {
-    return Number(formatEther(value as bigint)).toFixed(6);
+  const formatCurrency = (value: unknown, locale: string = "en-US") => {
+    return new Intl.NumberFormat(locale, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(formatEther(value as bigint)) || 0);
   };
 
   const getBUSDBalance = async (client: PublicActions) => {
@@ -146,14 +150,25 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
     const chainId = await client.getChainId();
 
     if (chainId !== SEPOLIA_DATA.chainId) {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [
+            {
+              chainId: SEPOLIA_DATA.hexChainId,
+            },
+          ],
+        });
+      } catch (error) {
+        enqueueSnackbar(
+          `You need to connect to Sepolia network to access this app`,
           {
-            chainId: SEPOLIA_DATA.hexChainId,
-          },
-        ],
-      });
+            variant: "error",
+            autoHideDuration: 6000,
+          }
+        );
+        return;
+      }
     }
 
     const [address] = await client.requestAddresses();

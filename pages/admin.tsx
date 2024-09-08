@@ -1,10 +1,11 @@
 "use client";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
 import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 import { Address } from "viem";
 import { useSnackbar } from "notistack";
+import CustomTextField from "@/components/CustomTextField";
 
 export default function Admin() {
   const { account, client, isOwner } = useClient();
@@ -65,12 +66,12 @@ export default function Admin() {
 
   return (
     <Box>
-      <Typography variant="h4" component="h1" gutterBottom mt={2}>
+      <Typography variant="h4" mt={2} fontWeight={"bold"}>
         Admin dashboard
       </Typography>
 
       <Box component="form" noValidate autoComplete="off" mt={2}>
-        <TextField
+        <CustomTextField
           fullWidth
           margin="normal"
           id="addressTo"
@@ -85,7 +86,7 @@ export default function Admin() {
           fullWidth
           size="large"
           onClick={() => transferOwnership()}
-          style={{ marginTop: "16px" }}
+          style={{ marginTop: "16px", borderRadius: 6 }}
           disabled={!isOwner || !toAddress}
         >
           Transfer ownership
@@ -96,7 +97,7 @@ export default function Admin() {
           fullWidth
           size="large"
           onClick={() => renounceOwnership()}
-          style={{ marginTop: "16px" }}
+          style={{ marginTop: "16px", borderRadius: 6 }}
           disabled={!isOwner}
         >
           Renounce ownership

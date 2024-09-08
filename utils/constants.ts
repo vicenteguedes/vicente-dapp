@@ -1,5 +1,5 @@
 import { Address, Chain } from "viem";
-import { sepolia, mainnet } from "viem/chains";
+import { sepolia } from "viem/chains";
 
 export const ETH_DEAD_ADDRESS = "0x000000000000000000000000000000000000dead";
 export const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";

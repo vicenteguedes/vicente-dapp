@@ -1,18 +1,12 @@
 "use client";
 
-import {
-  Box,
-  Button,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Button, MenuItem, Select, Typography } from "@mui/material";
 import { useState } from "react";
 import { Address, formatEther, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { ERC20_ABI, ETH_DEAD_ADDRESS, SEPOLIA_DATA } from "@/utils/constants";
 import { useSnackbar } from "notistack";
+import CustomTextField from "@/components/CustomTextField";
 
 export default function Operations() {
   const { account, client } = useClient();
@@ -64,18 +58,24 @@ export default function Operations() {
       return;
     }
 
-    const data = await client.writeContract({
-      account: fromAddress || account!,
-      address: SEPOLIA_DATA.tokens[0].address,
-      abi: ERC20_ABI,
-      functionName: "approve",
-      args: [toAddress, parseEther(tokenAmount!)],
-      chain: SEPOLIA_DATA?.chain,
-    });
+    try {
+      const data = await client.writeContract({
+        account: fromAddress || account!,
+        address: SEPOLIA_DATA.tokens[0].address,
+        abi: ERC20_ABI,
+        functionName: "approve",
+        args: [toAddress, parseEther(tokenAmount!)],
+        chain: SEPOLIA_DATA?.chain,
+      });
 
-    enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
-      variant: "success",
-    });
+      enqueueSnackbar(`Approve operation executed successfully: TX ${data}`, {
+        variant: "success",
+      });
+    } catch (error) {
+      enqueueSnackbar(`Failed to execute approve operation: ${error}`, {
+        variant: "error",
+      });
+    }
   };
 
   const burnTokens = async () => {
@@ -143,7 +143,7 @@ export default function Operations() {
       case "approve":
         return (
           <>
-            <TextField
+            <CustomTextField
               fullWidth
               margin="normal"
               id="addressTo"
@@ -152,7 +152,7 @@ export default function Operations() {
               value={toAddress || ""}
               onChange={(e) => setToAddress(e.target.value as Address)}
             />
-            <TextField
+            <CustomTextField
               fullWidth
               margin="normal"
               id="amountTo"
@@ -165,7 +165,7 @@ export default function Operations() {
         );
       case "burn":
         return (
-          <TextField
+          <CustomTextField
             fullWidth
             margin="normal"
             id="amountTo"
@@ -177,7 +177,7 @@ export default function Operations() {
         );
       case "mint":
         return (
-          <TextField
+          <CustomTextField
             fullWidth
             margin="normal"
             id="amountTo"
@@ -190,7 +190,7 @@ export default function Operations() {
       case "allowance":
         return (
           <>
-            <TextField
+            <CustomTextField
               fullWidth
               margin="normal"
               id="addressFrom"
@@ -199,7 +199,7 @@ export default function Operations() {
               value={fromAddress || ""}
               onChange={(e) => setFromAddress(e.target.value as Address)}
             />
-            <TextField
+            <CustomTextField
               fullWidth
               margin="normal"
               id="addressTo"
@@ -232,7 +232,7 @@ export default function Operations() {
 
   return (
     <Box>
-      <Typography variant="h4" mt={2} mb={4}>
+      <Typography variant="h4" mt={2} mb={4} fontWeight={"bold"}>
         Operations
       </Typography>
       <Box
@@ -243,6 +243,7 @@ export default function Operations() {
         textAlign={"left"}
       >
         <Select
+          sx={{ borderRadius: 2 }}
           fullWidth
           value={operation}
           onChange={(e) => setOperation(e.target.value as string)}
@@ -250,7 +251,9 @@ export default function Operations() {
           renderValue={(selected) => {
             if (!selected) {
               return (
-                <Typography variant="body1">Select operation...</Typography>
+                <Typography color="textSecondary" variant="body1">
+                  Select operation...
+                </Typography>
               );
             }
 
@@ -271,7 +274,7 @@ export default function Operations() {
               fullWidth
               size="large"
               onClick={() => handleExecuteOperation()}
-              style={{ marginTop: "16px" }}
+              style={{ marginTop: "16px", borderRadius: 6 }}
               disabled={isExecuteDisabled()}
             >
               {getExecuteOperationText()}

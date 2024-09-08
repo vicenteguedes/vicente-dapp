@@ -1,5 +1,5 @@
 import "viem/window";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useClient } from "@/contexts/ClientProvider";
 
 export default function HomePage() {
@@ -8,7 +8,11 @@ export default function HomePage() {
   if (!account) {
     return (
       <Box mt={6}>
-        <Button variant="contained" onClick={connect}>
+        <Button
+          variant="contained"
+          onClick={connect}
+          style={{ borderRadius: 6 }}
+        >
           Connect Wallet
         </Button>
       </Box>
@@ -17,29 +21,75 @@ export default function HomePage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom mt={2} mb={4}>
+      <Typography variant="h4" mt={2} fontWeight={"bold"}>
         Dashboard
       </Typography>
       <Box
-        borderRadius="4px"
-        border="1px solid lightgray"
-        padding={2}
-        display="flex"
-        flexDirection="column"
-        alignItems="flex-start"
-        mt={2}
+        sx={{
+          backgroundColor: "background.paper",
+          borderRadius: 2,
+          border: 1,
+          borderColor: "divider",
+          p: 3,
+          display: "inline-block",
+          flexDirection: "column",
+          gap: 2,
+          marginTop: 4,
+          minWidth: 552,
+          maxWidth: 1200,
+        }}
       >
-        <Box>
-          <Typography mb={1} variant="body1">
-            ETH Balance: {balances.eth} ETH
-          </Typography>
-          <Typography mb={1} variant="body1">
-            BUSD Balance: {balances.busd} BUSD
-          </Typography>
-          <Typography variant="body1">
-            BUSD total supply: {busdTotalSupply}
-          </Typography>
+        <Box display="flex" justifyContent="space-between" gap={2}>
+          <Paper
+            sx={{
+              flex: 1,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              boxShadow: "none",
+              minWidth: 130,
+            }}
+          >
+            <Typography variant="body2" color="textSecondary">
+              ETH Balance
+            </Typography>
+            <Typography variant="h3">{balances.eth}</Typography>
+          </Paper>
+
+          <Paper
+            sx={{
+              flex: 1,
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              boxShadow: "none",
+            }}
+          >
+            <Typography variant="body2" color="textSecondary">
+              BUSD Balance
+            </Typography>
+            <Typography variant="h3">{balances.busd}</Typography>
+          </Paper>
         </Box>
+
+        <Paper
+          sx={{
+            p: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            boxShadow: "none",
+            minWidth: 130,
+            alignSelf: "flex-end",
+          }}
+        >
+          <Typography variant="body2" color="textSecondary">
+            BUSD Total Supply
+          </Typography>
+          <Typography variant="h4">{busdTotalSupply}</Typography>
+        </Paper>
       </Box>
     </Box>
   );

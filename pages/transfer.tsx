@@ -1,5 +1,5 @@
 "use client";
-import { Box, Button, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Tooltip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
@@ -10,6 +10,7 @@ import {
   SEPOLIA_TX_BASE_URL,
 } from "@/utils/constants";
 import CircularProgress from "@mui/material/CircularProgress";
+import CustomTextField from "@/components/CustomTextField";
 
 export default function Transfer() {
   const { account, client } = useClient();
@@ -68,11 +69,11 @@ export default function Transfer() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom mt={2}>
+      <Typography variant="h4" mt={2} fontWeight={"bold"}>
         Transfer tokens
       </Typography>
       <Box component="form" noValidate autoComplete="off" mt={2}>
-        <TextField
+        <CustomTextField
           fullWidth
           margin="normal"
           id="addressFrom"
@@ -82,7 +83,7 @@ export default function Transfer() {
           placeholder={account || ""}
           onChange={(e) => setFromAddress(e.target.value as Address)}
         />
-        <TextField
+        <CustomTextField
           fullWidth
           margin="normal"
           id="addressTo"
@@ -91,7 +92,7 @@ export default function Transfer() {
           value={toAddress || ""}
           onChange={(e) => setToAddress(e.target.value as Address)}
         />
-        <TextField
+        <CustomTextField
           fullWidth
           margin="normal"
           id="amountTo"
@@ -111,7 +112,7 @@ export default function Transfer() {
           fullWidth
           size="large"
           onClick={() => transferTokens()}
-          style={{ marginTop: "16px" }}
+          style={{ marginTop: "16px", borderRadius: 6 }}
           disabled={!toAddress || !ethAmount}
         >
           Transfer tokens
