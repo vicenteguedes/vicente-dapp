@@ -30,6 +30,13 @@ const ClientContext = createContext<ConnectClientContextProps | undefined>(
   undefined
 );
 
+export const formatCurrency = (value: unknown, locale: string = "en-US") => {
+  return new Intl.NumberFormat(locale, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(formatEther(value as bigint)) || 0);
+};
+
 export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -41,22 +48,47 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
   const [balances, setBalances] = useState({ eth: "0", busd: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
 
-  const formatCurrency = (value: unknown, locale: string = "en-US") => {
-    return new Intl.NumberFormat(locale, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(Number(formatEther(value as bigint)) || 0);
-  };
+  const getHomeInfo = async () => {
+    if (!client || !account) {
+      return;
+    }
 
-  const getBUSDBalance = async (client: PublicActions) => {
-    const busdBalance = await client.readContract({
+    const baseContract = {
       address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
-      functionName: "balanceOf",
-      args: [account],
+    };
+
+    const [totalSupply, owner, busdBalance] = await client.multicall({
+      contracts: [
+        {
+          ...baseContract,
+          functionName: "totalSupply",
+        },
+        {
+          ...baseContract,
+          functionName: "owner",
+        },
+        {
+          ...baseContract,
+          functionName: "balanceOf",
+          args: [account],
+        },
+      ],
+      multicallAddress: SEPOLIA_DATA.multicallAddress,
+      allowFailure: false,
     });
 
-    return formatCurrency(busdBalance);
+    setBusdTotalSupply(formatCurrency(totalSupply));
+    setIsOwner(owner === account);
+
+    const ethBalance = await client.getBalance({
+      address: account,
+    });
+
+    setBalances({
+      eth: formatCurrency(ethBalance).toString(),
+      busd: formatCurrency(busdBalance).toString(),
+    });
   };
 
   const refreshBalances = async () => {
@@ -64,46 +96,15 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!account) {
         return;
       }
-      const client = getClient();
-
-      const ethBalance = await client.getBalance({
-        address: account,
-      });
-
-      const busdBalance = await getBUSDBalance(client);
-
-      setBalances({
-        eth: formatCurrency(ethBalance).toString(),
-        busd: busdBalance.toString(),
-      });
+      await getHomeInfo();
     } catch (error) {
       console.error("Failed to get balances:", error);
     }
   };
 
-  const getTotalSupply = async () => {
-    try {
-      if (!account) {
-        return;
-      }
-      const client = getClient();
-
-      const busdSupply = await client.readContract({
-        address: SEPOLIA_DATA.tokens[0].address,
-        abi: ERC20_ABI,
-        functionName: "totalSupply",
-      });
-
-      setBusdTotalSupply(formatCurrency(busdSupply));
-    } catch (error) {
-      console.error("Failed to get supply:", error);
-    }
-  };
-
   useEffect(() => {
     if (account) {
-      refreshBalances();
-      getTotalSupply();
+      getHomeInfo();
     }
   }, [account]);
 
@@ -173,19 +174,6 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const [address] = await client.requestAddresses();
     setAccount(address);
-
-    const owner = await client
-      .readContract({
-        address: SEPOLIA_DATA.tokens[0].address,
-        abi: ERC20_ABI,
-        functionName: "getOwner",
-      })
-      .catch((error) => {
-        console.error("Failed to get owner:", error);
-        return undefined;
-      });
-
-    setIsOwner(owner === address);
   };
 
   useEffect(() => {

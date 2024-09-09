@@ -13,7 +13,7 @@ export default function Operations() {
 
   const [fromAddress, setFromAddress] = useState<Address>();
   const [toAddress, setToAddress] = useState<Address>();
-  const [tokenAmount, setTokenAmount] = useState<string>();
+  const [tokenAmount, setTokenAmount] = useState<string>("");
   const { enqueueSnackbar } = useSnackbar();
 
   const [operation, setOperation] = useState<string>("");
@@ -54,17 +54,17 @@ export default function Operations() {
   };
 
   const approveTokens = async () => {
-    if (!client || !toAddress) {
+    if (!client || !toAddress || !account) {
       return;
     }
 
     try {
       const data = await client.writeContract({
-        account: fromAddress || account!,
+        account: fromAddress || account,
         address: SEPOLIA_DATA.tokens[0].address,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [toAddress, parseEther(tokenAmount!)],
+        args: [toAddress, parseEther(tokenAmount)],
         chain: SEPOLIA_DATA?.chain,
       });
 
@@ -79,7 +79,7 @@ export default function Operations() {
   };
 
   const burnTokens = async () => {
-    if (!client || !tokenAmount) {
+    if (!client || !tokenAmount || !account) {
       return;
     }
 
@@ -87,7 +87,7 @@ export default function Operations() {
     const hash = await client.writeContract({
       address: SEPOLIA_DATA.tokens[0].address,
       chain: SEPOLIA_DATA.chain,
-      account: account!,
+      account,
       abi: ERC20_ABI,
       functionName: "transfer",
       args: [ETH_DEAD_ADDRESS, parseEther(tokenAmount)],
@@ -99,7 +99,7 @@ export default function Operations() {
   };
 
   const mintTokens = async () => {
-    if (!client) {
+    if (!client || !account) {
       return;
     }
 
@@ -107,7 +107,7 @@ export default function Operations() {
       address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "mint",
-      account: account!,
+      account,
       chain: SEPOLIA_DATA?.chain,
       args: [parseEther(tokenAmount!)],
     });
@@ -118,12 +118,12 @@ export default function Operations() {
   };
 
   const checkAllowance = async () => {
-    if (!client || !toAddress) {
+    if (!client || !toAddress || !account) {
       return;
     }
 
     const data = await client.readContract({
-      account: fromAddress || account!,
+      account: fromAddress || account,
       address: SEPOLIA_DATA.tokens[0].address,
       abi: ERC20_ABI,
       functionName: "allowance",

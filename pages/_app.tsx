@@ -29,7 +29,7 @@ export default function App({ Component, pageProps }: AppProps) {
           />
         </Head>
         <NavBar />
-        <Container maxWidth={"sm"}>
+        <Container style={{ marginTop: 40 }} maxWidth="xl">
           <ComponentWithAccount {...pageProps} />
         </Container>
       </ClientProvider>
