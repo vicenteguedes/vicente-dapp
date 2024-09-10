@@ -1,13 +1,21 @@
 "use client";
 
-import { parseAbi, parseAbiItem } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useEffect, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { PAGE_SIZE, SEPOLIA_DATA } from "@/utils/constants";
-import DataTable, { TransactionLog } from "./ActivityDataTable";
+import { Box } from "@mui/material";
+import {
+  ERC20_ABI,
+  PAGE_SIZE,
+  SEPOLIA_DATA,
+  ZERO_ADDRESS,
+} from "@/utils/constants";
+import ActivityDataTable, { TransactionLog } from "./ActivityTable";
+import { MulticallContracts, parseAbi } from "viem";
+import AllowancesTable, { Allowance } from "./AllowancesTable";
+import AccordionSection from "./AccordionSection";
 
 const BATCH_SIZE = 1000;
+const EARLIEST_BLOCK = 0n;
 
 export default function Activity() {
   const { account, client } = useClient();
@@ -16,9 +24,10 @@ export default function Activity() {
   const [blockNumber, setBlockNumber] = useState<bigint>(-1n);
   const [tokenLogs, setTokenLogs] = useState<TransactionLog[]>([]);
   const [userLogs, setUserLogs] = useState<TransactionLog[]>([]);
-  const [userApprovalLogs, setUserApprovalLogs] = useState<TransactionLog[]>(
+  const [userApprovalAddresses, setUserApprovalAddresses] = useState<string[]>(
     []
   );
+  const [userAllowances, setUserAllowances] = useState<Allowance[]>([]);
 
   // push logs until we reach PAGE_SIZE
   const mergeLogs = (
@@ -29,89 +38,103 @@ export default function Activity() {
     ...newLogs.slice(0, PAGE_SIZE - newLogs.length - previousLogs.length),
   ];
 
-  const updateUserLogs = async (latestBlockNumber: bigint) => {
+  const loadBatchLogs = async (latestBlockNumber: bigint) => {
     if (!client) {
       return;
     }
 
-    // stop fetching transfer logs if we have enough
-    const [transferLogs, approvalLogs] = await Promise.all([
-      (userLogs.length < PAGE_SIZE
-        ? client.getLogs({
-            address: SEPOLIA_DATA.tokens[0].address,
-            event: parseAbiItem(
-              "event Transfer(address indexed from, address indexed to, uint256 value)"
-            ),
-            args: {
-              from: account,
-            },
-            fromBlock: latestBlockNumber - BigInt(BATCH_SIZE),
-            toBlock: latestBlockNumber,
-          })
-        : []) as TransactionLog[],
+    // do not let the block number go below EARLIEST_BLOCK
+    const fromBlock = BigInt(
+      Math.max(Number(latestBlockNumber) - BATCH_SIZE, Number(EARLIEST_BLOCK))
+    );
 
-      client.getLogs({
-        address: SEPOLIA_DATA.tokens[0].address,
-        event: parseAbiItem(
-          "event Approval(address indexed owner, address indexed spender, uint256 value)"
-        ),
-        args: {
-          owner: account,
-        },
-        fromBlock: latestBlockNumber - BigInt(BATCH_SIZE),
-        toBlock: latestBlockNumber,
-      }) as unknown as TransactionLog[],
-    ]);
-
-    setUserLogs((prev) => mergeLogs(prev, [...transferLogs, ...approvalLogs]));
-    setUserApprovalLogs((prev) => [...prev, ...approvalLogs]);
-  };
-
-  const updateTokenLogs = async (latestBlockNumber: bigint) => {
-    if (!client || tokenLogs.length >= PAGE_SIZE) {
-      return;
-    }
-
-    const blockTokenLogs = (await client.getLogs({
+    const logs = (await client.getLogs({
       address: SEPOLIA_DATA.tokens[0].address,
       events: parseAbi([
         "event Approval(address indexed owner, address indexed spender, uint256 value)",
         "event Transfer(address indexed from, address indexed to, uint256 value)",
       ]),
-      fromBlock: latestBlockNumber - BigInt(BATCH_SIZE),
+      fromBlock,
       toBlock: latestBlockNumber,
     })) as TransactionLog[];
 
-    setTokenLogs((prev) => mergeLogs(prev, blockTokenLogs));
-  };
-
-  const loadBatchLogs = async (latestBlockNumber: bigint) => {
-    if (!client || blockNumber < 0n) {
+    if (!logs.length) {
       return;
     }
 
-    await Promise.all([
-      updateTokenLogs(latestBlockNumber),
-      updateUserLogs(latestBlockNumber),
-    ]);
+    setTokenLogs((tokenLogs) => mergeLogs(tokenLogs, logs));
+    setUserLogs((userLogs) =>
+      mergeLogs(
+        userLogs,
+        logs.filter(
+          (log) =>
+            log.args?.from === account ||
+            log.args?.owner === account ||
+            // include minted tokens
+            (log.eventName === "Transfer" &&
+              log.args?.from === ZERO_ADDRESS &&
+              log.args?.to === account)
+        )
+      )
+    );
+
+    // set unique approval addresses
+    setUserApprovalAddresses((userApprovalAddresses) => {
+      const newAddresses = logs
+        .filter(
+          (log) => log.eventName === "Approval" && log.args?.owner === account
+        )
+        .map((log) => log.args.spender!);
+
+      return Array.from(new Set([...userApprovalAddresses, ...newAddresses]));
+    });
   };
 
-  const getBlockLogs = async () => {
+  const processBlockNumber = async () => {
     if (!client || !account) {
       return;
     }
 
-    if (
-      blockNumber === 0n ||
-      (tokenLogs.length >= PAGE_SIZE && userLogs.length >= PAGE_SIZE)
-    ) {
-      return;
+    if (blockNumber <= EARLIEST_BLOCK) {
+      return processUserAllowances();
     }
 
     await loadBatchLogs(blockNumber);
 
     setBlockNumber((blockNumber) =>
       BigInt(Math.max(Number(blockNumber - BigInt(BATCH_SIZE)), 0))
+    );
+  };
+
+  const processUserAllowances = async () => {
+    if (!client || !account) {
+      return;
+    }
+
+    const baseContract = {
+      address: SEPOLIA_DATA.tokens[0].address,
+      abi: ERC20_ABI,
+    };
+
+    const contracts = userApprovalAddresses.map((spender) => ({
+      ...baseContract,
+      functionName: "allowance",
+      args: [account, spender],
+    })) as MulticallContracts<
+      { address: string; abi: any; functionName: string; args: any[] }[]
+    >;
+
+    const allowances = await client.multicall({
+      contracts,
+      multicallAddress: SEPOLIA_DATA.multicallAddress,
+      allowFailure: false,
+    });
+
+    setUserAllowances(
+      userApprovalAddresses.map((spender, i) => ({
+        spender,
+        amount: allowances[i] as string,
+      }))
     );
   };
 
@@ -126,37 +149,47 @@ export default function Activity() {
 
   useEffect(() => {
     if (client) {
-      getBlockLogs();
+      processBlockNumber();
     }
   }, [blockNumber]);
 
+  const batchCount = Math.ceil(
+    Number(initialBlockNumber - EARLIEST_BLOCK) / BATCH_SIZE
+  );
+
+  const currentBatch =
+    batchCount - Math.ceil(Number(blockNumber - EARLIEST_BLOCK) / BATCH_SIZE);
+
   return (
     <Box>
-      <Typography variant="h5" mt={6}>
-        Token activity
-      </Typography>
-      <Box mt={2}>
-        <DataTable
-          rows={tokenLogs}
-          batchCount={Math.ceil(Number(initialBlockNumber) / BATCH_SIZE)}
-          currentBatch={Math.ceil(
-            Number(initialBlockNumber - blockNumber) / BATCH_SIZE
-          )}
-        />
-      </Box>
-      <Box mt={2}>
-        <Typography variant="h5" mt={6}>
-          User activity
-        </Typography>
-        <Box mt={2}>
-          <DataTable
-            rows={userLogs}
-            batchCount={Math.ceil(Number(initialBlockNumber) / BATCH_SIZE)}
-            currentBatch={Math.ceil(
-              Number(initialBlockNumber - blockNumber) / BATCH_SIZE
-            )}
+      <Box mt={6}>
+        <AccordionSection title="Token Activity">
+          <ActivityDataTable
+            rows={tokenLogs}
+            batchCount={batchCount}
+            currentBatch={currentBatch}
           />
-        </Box>
+        </AccordionSection>
+      </Box>
+
+      <Box mt={3}>
+        <AccordionSection title="User Activity">
+          <ActivityDataTable
+            rows={userLogs}
+            batchCount={batchCount}
+            currentBatch={currentBatch}
+          />
+        </AccordionSection>
+      </Box>
+
+      <Box mt={3}>
+        <AccordionSection title="User Allowances">
+          <AllowancesTable
+            rows={userAllowances}
+            batchCount={batchCount}
+            currentBatch={currentBatch}
+          />
+        </AccordionSection>
       </Box>
     </Box>
   );

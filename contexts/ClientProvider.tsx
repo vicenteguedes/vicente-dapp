@@ -227,8 +227,9 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useClient: () => ConnectClientContextProps = () => {
   const context = useContext(ClientContext);
 
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useClient must be used within a ClientProvider");
   }
+
   return context;
 };
