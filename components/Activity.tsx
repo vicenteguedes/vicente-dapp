@@ -15,7 +15,7 @@ import AllowancesTable, { Allowance } from "./AllowancesTable";
 import AccordionSection from "./AccordionSection";
 
 const BATCH_SIZE = 1000;
-const EARLIEST_BLOCK = 0n;
+const EARLIEST_BLOCK = 5680636n;
 
 export default function Activity() {
   const { account, client } = useClient();
