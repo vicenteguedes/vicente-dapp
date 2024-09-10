@@ -81,7 +81,9 @@ export default function ActivityDataTable({
       loading={rows.length < PAGE_SIZE && currentBatch < batchCount}
       getRowId={(row) => `${row.transactionHash}_${row.logIndex}`}
       height={600}
-      progress={100 * (rows.length / PAGE_SIZE)}
+      progress={
+        100 * Math.max(rows.length / PAGE_SIZE, currentBatch / batchCount)
+      }
     />
   );
 }
