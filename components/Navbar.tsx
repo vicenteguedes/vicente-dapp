@@ -36,7 +36,7 @@ function NavBar() {
                 display: "block",
               }}
             >
-              dApp
+              Home
             </Button>
           </Link>
 
