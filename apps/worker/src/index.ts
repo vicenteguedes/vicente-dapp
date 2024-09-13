@@ -3,6 +3,8 @@ import * as db from "@repo/database";
 import { config } from "./config";
 import * as schedule from "node-schedule";
 import { synchronizeTransactions } from "./transactions";
+import { synchronizeBlocks } from "./blocks";
+import { logger } from "@repo/logger";
 
 const run = async () => {
   initViemClient();
@@ -11,12 +13,15 @@ const run = async () => {
 
   const c = config.get("schedule");
 
-  // schedule local cron job
   schedule.scheduleJob(c.synchronizeTransactions, synchronizeTransactions);
 
-  console.log(`Job fetchBlockchainData scheduled "${c.synchronizeTransactions}"`);
+  logger.info(`Job synchronizeTransactions scheduled "${c.synchronizeTransactions}"`);
+
+  schedule.scheduleJob(c.synchronizeBlocks, synchronizeBlocks);
+
+  logger.info(`Job synchronizeBlocks scheduled "${c.synchronizeBlocks}"`);
 };
 
 run().then(() => {
-  console.log("Started scheduler");
+  logger.info("Started scheduler");
 });

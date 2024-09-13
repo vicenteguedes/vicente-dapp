@@ -2,7 +2,7 @@ import { ERC20_ABI, SEPOLIA_DATA } from "../../utils/constants";
 import { viemClient } from "../../viem";
 import { Transaction } from "@repo/database";
 import { Request, Response } from "express";
-import { formatEther, MulticallContracts } from "viem";
+import { MulticallContracts } from "viem";
 
 export const getAllowances = async (req: Request, res: Response) => {
   const account = req.query.account;
@@ -19,13 +19,7 @@ export const getAllowances = async (req: Request, res: Response) => {
     .andWhere("transaction.eventName = 'Approval'")
     .getMany();
 
-  const userApprovalAddresses = userApprovals.reduce((acc, { to }) => {
-    if (!to || acc.includes(to)) return acc;
-
-    acc.push(to);
-
-    return acc;
-  }, [] as string[]);
+  const userApprovalAddresses = Array.from(new Set(userApprovals.map(({ to }) => to)));
 
   const baseContract = {
     address: SEPOLIA_DATA.tokens[0].address,
@@ -38,20 +32,17 @@ export const getAllowances = async (req: Request, res: Response) => {
     args: [account, spender],
   })) as MulticallContracts<{ address: string; abi: any; functionName: string; args: any[] }[]>;
 
-  const allowances = await viemClient.multicall({
+  const allowances = (await viemClient.multicall({
     contracts,
     multicallAddress: SEPOLIA_DATA.multicallAddress,
     allowFailure: false,
-  });
+  })) as bigint[];
 
   const userAllowances = userApprovalAddresses
     .map((spender, i) => ({
       spender,
-      value: formatEther(allowances[i] as bigint),
+      value: allowances[i].toString(),
     }))
-    .filter(({ value }) => value !== "0");
-
-  console.log("userAllowances", userAllowances);
-
+    .filter((allowance) => Number(allowance.value) > 0);
   res.json(userAllowances);
 };

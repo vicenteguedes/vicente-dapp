@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf ./dist && tsc",
     "clean": "rm -rf dist",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "lint": "tsc --noEmit && eslint \"src/**/*.ts*\" --max-warnings 0",
@@ -21,10 +21,11 @@
     "typeorm": "^0.3.20",
     "typeorm-naming-strategies": "^4.1.0",
     "viem": "^2.21.5",
-    "@repo/api-types": "*"
+    "@repo/api-types": "*",
+    "@repo/database": "*",
+    "@repo/logger": "*"
   },
   "devDependencies": {
-    "@repo/database": "*",
     "@repo/eslint-config": "*",
     "@repo/jest-presets": "*",
     "@repo/typescript-config": "*",

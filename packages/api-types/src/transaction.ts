@@ -6,5 +6,10 @@ export interface Transaction {
   eventName: string;
   from?: string;
   to?: string;
-  value?: number;
+  value?: bigint;
 }
+
+export type DailyVolume = {
+  day: string;
+  value: number;
+};

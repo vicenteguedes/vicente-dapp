@@ -28,14 +28,17 @@ const db = __importStar(require("@repo/database"));
 const config_1 = require("./config");
 const schedule = __importStar(require("node-schedule"));
 const transactions_1 = require("./transactions");
+const blocks_1 = require("./blocks");
+const logger_1 = require("@repo/logger");
 const run = async () => {
     (0, viem_1.initViemClient)();
     await db.start();
     const c = config_1.config.get("schedule");
-    // schedule local cron job
     schedule.scheduleJob(c.synchronizeTransactions, transactions_1.synchronizeTransactions);
-    console.log(`Job fetchBlockchainData scheduled "${c.synchronizeTransactions}"`);
+    logger_1.logger.info(`Job synchronizeTransactions scheduled "${c.synchronizeTransactions}"`);
+    schedule.scheduleJob(c.synchronizeBlocks, blocks_1.synchronizeBlocks);
+    logger_1.logger.info(`Job synchronizeBlocks scheduled "${c.synchronizeBlocks}"`);
 };
 run().then(() => {
-    console.log("Started scheduler");
+    logger_1.logger.info("Started scheduler");
 });

@@ -30,12 +30,10 @@ interface ConnectClientContextProps {
 const ClientContext = createContext<ConnectClientContextProps | undefined>(undefined);
 
 export const formatCurrency = (value: unknown, locale: string = "en-US") => {
-  const parsedValue = Number(typeof value === "bigint" ? formatEther(value) : (value as number));
-
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 8,
-  }).format(parsedValue || 0);
+  }).format(Number(formatEther(value as bigint)) || 0);
 };
 
 export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

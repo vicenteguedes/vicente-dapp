@@ -1,6 +1,5 @@
 import * as React from "react";
 import { GridColDef } from "@mui/x-data-grid";
-import { formatEther } from "viem";
 import CustomDataTable from "./CustomDataTable";
 import { formatCurrency } from "@/contexts/ClientProvider";
 

@@ -1,10 +1,6 @@
 import React from "react";
-import { Box, CircularProgress, CircularProgressProps, styled, Typography } from "@mui/material";
+import { Box, CircularProgress, styled } from "@mui/material";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-
-interface CustomLoadingOverlayProps {
-  progress: number;
-}
 
 const StyledGridOverlay = styled("div")(({ theme }) => ({
   display: "flex",

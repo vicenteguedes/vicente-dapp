@@ -1,7 +1,8 @@
-import { formatEther, parseAbi } from "viem";
+import { parseAbi } from "viem";
 import { BATCH_SIZE, EARLIEST_BLOCK, SEPOLIA_DATA } from "./utils/constants";
 import { viemClient } from "./viem";
-import { Transaction } from "@repo/database";
+import { Block, Contract, Transaction } from "@repo/database";
+import { logger } from "@repo/logger";
 
 interface TransactionLog {
   address: string;
@@ -34,17 +35,43 @@ export const loadBatchLogs = async (fromBlock: bigint, toBlock: bigint): Promise
     toBlock,
   }) as unknown as TransactionLog[];
 
-export const synchronizeTransactions = async () => {
-  let blockNumber = await viemClient.getBlockNumber();
+// insert empty blocks to fetch the timestamp later
+const insertBlocks = async (logs: TransactionLog[]) => {
+  const uniqueBlockNumbers = Array.from(new Set(logs.map((log) => Number(log.blockNumber))));
+  if (!uniqueBlockNumbers.length) return;
 
-  const { earliestBlock: databaseEarliestBlockNumber } = await Transaction.getRepository()
-    .createQueryBuilder()
-    .select("MIN(block_number)", "earliestBlock")
-    .getRawOne();
+  try {
+    // try to bulk insert
+    await Block.insert(uniqueBlockNumbers.map(formatBlock));
+  } catch (error) {
+    // if bulk insert fails, insert one by one
+    await Promise.all(
+      uniqueBlockNumbers.map((blockNumber) => Block.insert(formatBlock(blockNumber)).catch(() => undefined))
+    );
+  }
+};
 
-  if (databaseEarliestBlockNumber && databaseEarliestBlockNumber > EARLIEST_BLOCK) {
-    console.log("Database is still performing initial sync");
-    return;
+const insertTransactions = async (logs: TransactionLog[]) => {
+  try {
+    // try to bulk insert
+    await Transaction.insert(logs.map(formatLog));
+  } catch (error) {
+    // if bulk insert fails, insert one by one
+    logger.error({ error }, "Error inserting transactions");
+
+    await Promise.all(
+      logs.map((log) =>
+        Transaction.insert(formatLog(log)).catch((error) => {
+          logger.error({ error, log }, "Error inserting transaction");
+        })
+      )
+    );
+  }
+};
+
+const getEarliestBlockToSync = async (contract: Contract) => {
+  if (!contract.isSynced) {
+    return BigInt(EARLIEST_BLOCK);
   }
 
   const { latestBlock: databaseLatestBlockNumber } = await Transaction.getRepository()
@@ -52,47 +79,65 @@ export const synchronizeTransactions = async () => {
     .select("MAX(block_number)", "latestBlock")
     .getRawOne();
 
-  const synchronizeUntilBlockNumber = databaseLatestBlockNumber
-    ? BigInt(databaseLatestBlockNumber + 1)
-    : EARLIEST_BLOCK;
+  return databaseLatestBlockNumber ? BigInt(databaseLatestBlockNumber + 1) : EARLIEST_BLOCK;
+};
 
-  console.log({ blockNumber, synchronizeUntilBlockNumber: synchronizeUntilBlockNumber }, "Syncronizing blockchain");
+export const synchronizeTransactions = async () => {
+  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.chainId } });
 
-  while (blockNumber > synchronizeUntilBlockNumber) {
-    const fromBlock = BigInt(Math.max(Number(blockNumber) - BATCH_SIZE, Number(synchronizeUntilBlockNumber)));
+  if (contract.isSyncing) {
+    logger.info({ contract }, "Contract sync is in progress");
+    return;
+  }
 
-    console.log({ fromBlock, toBlock: blockNumber, synchronizeUntilBlockNumber }, "Fetching blocks");
+  try {
+    logger.info("Synchronizing transactions");
 
-    const logs = await loadBatchLogs(fromBlock, blockNumber);
+    let blockNumber = await viemClient.getBlockNumber();
 
-    console.log({ fromBlock, toBlock: blockNumber, logs }, "Fetched blocks");
+    contract.isSyncing = true;
+    await contract.save();
 
-    try {
-      // try to bulk insert
-      await Transaction.insert(logs.map(formatLog));
-    } catch (error) {
-      // if bulk insert fails, insert one by one
-      console.error("Error while inserting logs", error);
-      await Promise.all(
-        logs.map((log) =>
-          Transaction.insert(formatLog(log)).catch((error) => {
-            console.error("Error while inserting log", error);
-          })
-        )
-      );
+    const synchronizeUntilBlockNumber = await getEarliestBlockToSync(contract);
+
+    logger.info({ blockNumber, synchronizeUntilBlockNumber: synchronizeUntilBlockNumber }, "Syncronizing blockchain");
+
+    while (blockNumber > synchronizeUntilBlockNumber) {
+      const fromBlock = BigInt(Math.max(Number(blockNumber) - BATCH_SIZE, Number(synchronizeUntilBlockNumber)));
+
+      logger.info({ fromBlock, toBlock: blockNumber, synchronizeUntilBlockNumber }, "Fetching transactions");
+
+      const logs = await loadBatchLogs(fromBlock, blockNumber);
+
+      logger.info({ fromBlock, toBlock: blockNumber, logs }, "Fetched transactions");
+
+      await insertBlocks(logs);
+      await insertTransactions(logs);
+
+      blockNumber = BigInt(Math.max(Number(blockNumber) - BATCH_SIZE - 1, Number(synchronizeUntilBlockNumber)));
     }
+    contract.isSynced = true;
 
-    blockNumber = BigInt(Math.max(Number(blockNumber) - BATCH_SIZE - 1, Number(synchronizeUntilBlockNumber)));
+    logger.info("Successfully finished synchronizing transactions");
+  } catch (error) {
+    logger.error({ error }, "Error synchronizing transactions");
+  } finally {
+    contract.isSyncing = false;
+    await contract.save();
   }
 };
+
+const formatBlock = (blockNumber: number) => ({
+  number: blockNumber,
+});
 
 const formatLog = (log: TransactionLog) => ({
   blockNumber: Number(log.blockNumber),
   transactionHash: log.transactionHash,
-  address: log.address,
+  contractAddress: log.address,
   eventName: log.eventName,
   from: log.args.from || log.args.owner,
   to: log.args.to || log.args.spender,
-  value: Number(formatEther(log.args.value)),
+  value: log.args.value,
   logIndex: log.logIndex,
 });

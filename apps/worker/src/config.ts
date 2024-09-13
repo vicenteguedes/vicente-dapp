@@ -25,7 +25,12 @@ export const config = convict({
   },
   schedule: {
     synchronizeTransactions: {
-      env: "SCHEDULE_FETCH_BLOCKCHAIN_DATA",
+      env: "SCHEDULE_SYNCHRONIZE_TRANSACTIONS",
+      default: "*/1 * * * *",
+      doc: "Cron format - every 5 minutes by default",
+    },
+    synchronizeBlocks: {
+      env: "SCHEDULE_SYNCHRONIZE_BLOCKS",
       default: "*/1 * * * *",
       doc: "Cron format - every 5 minutes by default",
     },

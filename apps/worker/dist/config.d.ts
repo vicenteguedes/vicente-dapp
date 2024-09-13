@@ -9,6 +9,7 @@ export declare const config: convict.Config<{
     };
     schedule: {
         synchronizeTransactions: string;
+        synchronizeBlocks: string;
     };
 }>;
 //# sourceMappingURL=config.d.ts.map

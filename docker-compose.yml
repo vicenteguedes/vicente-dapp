@@ -1,16 +1,16 @@
 services:
-  # web:
-  #   container_name: web
-  #   build:
-  #     context: .
-  #     dockerfile: ./apps/web/Dockerfile
-  #     args:
-  #       - NEXT_PUBLIC_API_URL=http://localhost:3001
-  #   restart: always
-  #   ports:
-  #     - 3000:3000
-  #   networks:
-  #     - app_network
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://vicente.training.real-estate-executive.com
+    restart: always
+    ports:
+      - 3000:3000
+    networks:
+      - app_network
   api:
     container_name: api
     build:
@@ -24,21 +24,21 @@ services:
     environment:
       - NODE_ENV=production
       - DB_HOST=db
-  # worker-cron:
-  #   image: node:18
-  #   user: root
-  #   container_name: dapp-worker-cron
-  #   build:
-  #     context: .
-  #     dockerfile: ./apps/worker/Dockerfile
-  #   environment:
-  #     PORT: 8001
-  #     DB_HOST: db
-  #     NODE_ENV: production
-  #   depends_on:
-  #     - db
-  #   networks:
-  #     - app_network
+  worker-cron:
+    image: node:18
+    user: root
+    container_name: dapp-worker-cron
+    build:
+      context: .
+      dockerfile: ./apps/worker/Dockerfile
+    environment:
+      PORT: 8001
+      DB_HOST: db
+      NODE_ENV: production
+    depends_on:
+      - db
+    networks:
+      - app_network
 
   db:
     container_name: db

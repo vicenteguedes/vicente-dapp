@@ -7,7 +7,7 @@ const initViemClient = () => {
         return exports.viemClient;
     }
     exports.viemClient = (0, viem_1.createPublicClient)({
-        transport: (0, viem_1.http)("https://ethereum-sepolia-rpc.publicnode.com"),
+        transport: (0, viem_1.http)("https://sepolia.drpc.org"),
     });
 };
 exports.initViemClient = initViemClient;

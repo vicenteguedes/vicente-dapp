@@ -1,24 +1,16 @@
-import { Column, Entity, Unique } from "typeorm";
+import { Column, Entity, ManyToOne, Unique } from "typeorm";
 import { IDTimeStampEntity } from "./base";
-
-export enum EventName {
-  APPROVAL = "Approval",
-  TRANSFER = "Transfer",
-}
-
-export interface Args {
-  owner?: string;
-  spender?: string;
-  amount?: string;
-  from?: string;
-  to?: string;
-}
+import { Block } from "./block";
+import { Contract } from "./contract";
 
 @Entity()
 @Unique(["transactionHash", "logIndex"])
 export class Transaction extends IDTimeStampEntity {
   @Column()
-  address: string;
+  contractAddress: string;
+
+  @ManyToOne(() => Contract, (contract) => contract.transactions, { onDelete: "CASCADE" })
+  contract: Contract;
 
   @Column()
   logIndex: number;
@@ -29,6 +21,9 @@ export class Transaction extends IDTimeStampEntity {
   @Column()
   blockNumber: number;
 
+  @ManyToOne(() => Block, (block) => block.transactions, { onDelete: "SET NULL" })
+  block: Block;
+
   @Column()
   eventName: string;
 
@@ -38,6 +33,6 @@ export class Transaction extends IDTimeStampEntity {
   @Column({ nullable: true })
   to?: string;
 
-  @Column({ nullable: true, type: "numeric", precision: 36, scale: 18 })
-  value?: number;
+  @Column({ nullable: true, type: "numeric" })
+  value?: bigint;
 }

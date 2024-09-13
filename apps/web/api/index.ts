@@ -9,5 +9,6 @@ const api = axios.create({
 
 export const TRANSACTIONS_ENDPOINT = "/transactions";
 export const ALLOWANCES_ENDPOINT = "/allowances";
+export const DAILY_VOLUME_ENDPOINT = "/daily-volume";
 
 export default api;
