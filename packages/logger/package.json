@@ -1,0 +1,23 @@
+{
+  "name": "@repo/logger",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rm -rf ./dist && tsc"
+  },
+  "dependencies": {
+    "typeorm": "^0.3.20",
+    "typeorm-naming-strategies": "^4.1.0",
+    "@repo/typescript-config": "*",
+    "convict": "^6.2.4",
+    "pino": "^9.4.0"
+  },
+  "exports": {
+    "import": "./src/index.ts",
+    "require": "./dist/index.js"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@repo/api-types",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    "import": "./src/index.ts",
+    "require": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc"
+  },
+  "dependencies": {
+    "typescript": "5.1.3"
+  }
+}
