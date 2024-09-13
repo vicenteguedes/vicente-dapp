@@ -1,9 +1,9 @@
 import * as React from "react";
 import { GridColDef } from "@mui/x-data-grid";
-import { ETH_DEAD_ADDRESS, ZERO_ADDRESS } from "@/utils/constants";
 import { formatCurrency } from "@/contexts/ClientProvider";
 import CustomDataTable from "./CustomDataTable";
 import { Transaction } from "@repo/api-types";
+import { ETH_DEAD_ADDRESS, ZERO_ADDRESS } from "@repo/common";
 
 interface DataTableProps {
   rows: Transaction[];

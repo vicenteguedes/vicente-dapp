@@ -23,7 +23,8 @@
     "viem": "^2.21.5",
     "@repo/api-types": "*",
     "@repo/database": "*",
-    "@repo/logger": "*"
+    "@repo/logger": "*",
+    "@repo/common": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

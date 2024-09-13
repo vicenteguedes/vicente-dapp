@@ -2,10 +2,10 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import { useClient } from "@/contexts/ClientProvider";
-import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 import { Address } from "viem";
 import { useSnackbar } from "notistack";
 import CustomTextField from "@/components/CustomTextField";
+import { ERC20_ABI, SEPOLIA_DATA } from "@repo/common";
 
 export default function Admin() {
   const { account, client, isOwner } = useClient();

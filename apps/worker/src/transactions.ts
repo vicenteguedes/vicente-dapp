@@ -1,8 +1,8 @@
 import { parseAbi } from "viem";
-import { BATCH_SIZE, EARLIEST_BLOCK, SEPOLIA_DATA } from "./utils/constants";
 import { viemClient } from "./viem";
 import { Block, Contract, Transaction } from "@repo/database";
 import { logger } from "@repo/logger";
+import { BATCH_SIZE, EARLIEST_BLOCK, SEPOLIA_DATA } from "@repo/common";
 
 interface TransactionLog {
   address: string;
@@ -83,7 +83,7 @@ const getEarliestBlockToSync = async (contract: Contract) => {
 };
 
 export const synchronizeTransactions = async () => {
-  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.chainId } });
+  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.networkId } });
 
   if (contract.isSyncing) {
     logger.info({ contract }, "Contract sync is in progress");

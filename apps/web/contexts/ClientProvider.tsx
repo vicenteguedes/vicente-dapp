@@ -12,8 +12,8 @@ import {
   PublicActions,
   WalletActions,
 } from "viem";
-import { SEPOLIA_DATA, ERC20_ABI } from "@/utils/constants";
 import { enqueueSnackbar } from "notistack";
+import { ERC20_ABI, SEPOLIA_DATA } from "@repo/common";
 
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
@@ -144,7 +144,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const client = getClient(forceRefresh);
     const chainId = await client.getChainId();
 
-    if (chainId !== SEPOLIA_DATA.chainId) {
+    if (chainId !== SEPOLIA_DATA.networkId) {
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
@@ -172,7 +172,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       providerWithDetail.provider.on("chainChanged", async () => {
         const chainId = await client.getChainId();
 
-        if (chainId === SEPOLIA_DATA.chainId) {
+        if (chainId === SEPOLIA_DATA.networkId) {
           return;
         }
 

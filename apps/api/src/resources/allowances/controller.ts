@@ -1,6 +1,6 @@
-import { ERC20_ABI, SEPOLIA_DATA } from "../../utils/constants";
 import { viemClient } from "../../viem";
 import { Transaction } from "@repo/database";
+import { ERC20_ABI, SEPOLIA_DATA } from "@repo/common";
 import { Request, Response } from "express";
 import { MulticallContracts } from "viem";
 
@@ -8,7 +8,7 @@ export const getAllowances = async (req: Request, res: Response) => {
   const account = req.query.account;
 
   if (!account) {
-    res.send(422).json({ error: "Account is required" });
+    res.status(422).json({ error: "Account is required" });
     return;
   }
 
@@ -43,6 +43,6 @@ export const getAllowances = async (req: Request, res: Response) => {
       spender,
       value: allowances[i].toString(),
     }))
-    .filter((allowance) => Number(allowance.value) > 0);
+    .filter((allowance) => Number(allowance.value));
   res.json(userAllowances);
 };
