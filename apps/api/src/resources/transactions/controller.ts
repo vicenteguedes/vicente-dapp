@@ -1,4 +1,4 @@
-import { ZERO_ADDRESS } from "../../utils/constants";
+import { SEPOLIA_DATA, ZERO_ADDRESS } from "../../utils/constants";
 import { DailyVolume, Transaction } from "@repo/api-types";
 import { Block, Contract, db, Transaction as TransactionEntity } from "@repo/database";
 import { logger } from "@repo/logger";
@@ -66,8 +66,14 @@ export const getDailyVolume = async (_: Request, res: Response) => {
 };
 
 export const deleteTransactions = async (_: Request, res: Response) => {
+  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.networkId } });
+
+  if (contract.isSyncing) {
+    res.status(409).send("Contract is syncing, please try again later.");
+    return;
+  }
+
   try {
-    // begin database transaction and delete Transaction and Block entities
     await db.transaction(async (manager) => {
       await manager.delete(TransactionEntity, {});
       await manager.delete(Block, {});
