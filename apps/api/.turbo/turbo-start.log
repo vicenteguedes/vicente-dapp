@@ -1,6 +1,0 @@
-
-
-> api@0.0.0 start
-> node -r esbuild-register ./src/index.ts
-
-[1G[0Kapi running on 3001

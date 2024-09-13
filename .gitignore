@@ -1,6 +1,6 @@
 node_modules
 apps/web/.next
-apps/web/.turbo
+apps/**/.turbo
 .turbo/*
 apps/**/dist
 packages/**/dist
