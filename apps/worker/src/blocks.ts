@@ -28,4 +28,6 @@ export const synchronizeBlocks = async () => {
       logger.error({ error, blockNumber: block.number }, "Error updating block");
     }
   }
+
+  logger.info("Synchronized blocks");
 };

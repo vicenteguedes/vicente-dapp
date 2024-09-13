@@ -25,21 +25,17 @@ services:
       - NODE_ENV=production
       - DB_HOST=db
   worker-cron:
-    image: node:18
-    user: root
     container_name: dapp-worker-cron
     build:
       context: .
       dockerfile: ./apps/worker/Dockerfile
     environment:
-      PORT: 8001
       DB_HOST: db
       NODE_ENV: production
     depends_on:
       - db
     networks:
       - app_network
-
   db:
     container_name: db
     image: postgres:15.7-alpine
