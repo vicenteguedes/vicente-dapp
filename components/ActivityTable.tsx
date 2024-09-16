@@ -26,8 +26,6 @@ export interface TransactionLog {
 
 interface DataTableProps {
   rows: TransactionLog[];
-  batchCount: number;
-  currentBatch: number;
 }
 
 const columns: GridColDef[] = [
@@ -69,21 +67,13 @@ const columns: GridColDef[] = [
   },
 ];
 
-export default function ActivityDataTable({
-  rows,
-  currentBatch,
-  batchCount,
-}: DataTableProps) {
+export default function ActivityDataTable({ rows }: DataTableProps) {
   return (
     <CustomDataTable
       rows={rows}
       columns={columns}
-      loading={rows.length < PAGE_SIZE && currentBatch < batchCount}
       getRowId={(row) => `${row.transactionHash}_${row.logIndex}`}
       height={600}
-      progress={
-        100 * Math.max(rows.length / PAGE_SIZE, currentBatch / batchCount)
-      }
     />
   );
 }

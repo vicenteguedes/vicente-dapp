@@ -1,99 +1,87 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   CircularProgress,
   CircularProgressProps,
+  darken,
+  lighten,
   styled,
+  Theme,
   Typography,
 } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridRowIdGetter, GridRowModelUpdate, GridValidRowModel } from "@mui/x-data-grid";
 
-interface CustomLoadingOverlayProps {
-  progress: number;
-}
-
-const StyledGridOverlay = styled("div")(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  backgroundColor: "rgba(18, 18, 18, 0.9)",
+const getBackgroundColor = (color: string, theme: Theme, coefficient: number) => ({
+  backgroundColor: darken(color, coefficient),
   ...theme.applyStyles("light", {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: lighten(color, coefficient),
   }),
+});
+
+const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
+  "& .super-app-theme--new": {
+    ...getBackgroundColor(theme.palette.success.main, theme, 0.7),
+    "&:hover": {
+      ...getBackgroundColor(theme.palette.success.main, theme, 0.6),
+    },
+    "&.Mui-selected": {
+      ...getBackgroundColor(theme.palette.success.main, theme, 0.5),
+      "&:hover": {
+        ...getBackgroundColor(theme.palette.success.main, theme, 0.4),
+      },
+    },
+  },
 }));
-
-function CircularProgressWithLabel(
-  props: CircularProgressProps & { value: number }
-) {
-  return (
-    <Box sx={{ position: "relative", display: "inline-flex" }}>
-      <CircularProgress variant="determinate" {...props} />
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Typography
-          variant="caption"
-          component="div"
-          color="text.primary"
-        >{`${Math.round(props.value)}%`}</Typography>
-      </Box>
-    </Box>
-  );
-}
-
-function CustomLoadingOverlay({ progress }: CustomLoadingOverlayProps) {
-  return (
-    <StyledGridOverlay>
-      <CircularProgressWithLabel value={progress} />
-      <Box sx={{ mt: 2 }}>Loading rows…</Box>
-    </StyledGridOverlay>
-  );
-}
 
 interface CustomDataTableProps<T> {
   rows: T[];
   columns: GridColDef[];
-  loading: boolean;
-  getRowId: (row: T) => string;
+  getRowId: GridRowIdGetter<GridValidRowModel>;
   height?: number;
   minHeight?: number;
-  progress: number;
 }
 
-const CustomDataTable = <T,>({
+const CustomDataTable = <T extends GridValidRowModel>({
   rows,
   columns,
-  loading,
   getRowId,
   minHeight,
   height,
-  progress,
 }: CustomDataTableProps<T>) => {
+  const [currentRows, setCurrentRows] = useState(rows);
+
+  useEffect(() => {
+    const newRows = rows.filter((row) => row.status === "new");
+
+    newRows.forEach((row) => {
+      const timerId = setTimeout(() => {
+        setCurrentRows((prevRows) => prevRows.map((r) => (r === row ? { ...r, status: "old" } : r)));
+      }, 10000);
+
+      return () => clearTimeout(timerId);
+    });
+  }, [currentRows]);
+
+  useEffect(() => {
+    setCurrentRows(rows);
+  }, [rows]);
+
+  console.log("currentRows: ", currentRows);
+
   return (
     <Box mb={1}>
-      <DataGrid
+      <StyledDataGrid
         sx={{
           height,
           minHeight,
           borderRadius: 2,
         }}
-        slots={{
-          loadingOverlay: () => <CustomLoadingOverlay progress={progress} />,
-        }}
         hideFooterPagination={true}
         hideFooter={true}
-        loading={loading}
-        rows={rows}
+        rows={currentRows}
         columns={columns}
         getRowId={getRowId}
+        getRowClassName={(params) => `super-app-theme--${params.row.status}`}
       />
     </Box>
   );

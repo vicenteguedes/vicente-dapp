@@ -10,8 +10,6 @@ export interface Allowance {
 
 interface DataTableProps {
   rows: Allowance[];
-  batchCount: number;
-  currentBatch: number;
 }
 
 const columns: GridColDef[] = [
@@ -29,21 +27,8 @@ const columns: GridColDef[] = [
   },
 ];
 
-const AllowancesTable: React.FC<DataTableProps> = ({
-  rows,
-  currentBatch,
-  batchCount,
-}) => {
-  return (
-    <CustomDataTable
-      rows={rows}
-      columns={columns}
-      loading={currentBatch < batchCount}
-      getRowId={(row) => row.spender}
-      minHeight={200}
-      progress={100 * (currentBatch / batchCount)}
-    />
-  );
+const AllowancesTable: React.FC<DataTableProps> = ({ rows }) => {
+  return <CustomDataTable rows={rows} columns={columns} getRowId={(row) => row.spender} minHeight={200} />;
 };
 
 export default AllowancesTable;
