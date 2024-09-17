@@ -26,8 +26,8 @@ export const config = convict({
   schedule: {
     synchronizeTransactions: {
       env: "SCHEDULE_SYNCHRONIZE_TRANSACTIONS",
-      default: "*/5 * * * *",
-      doc: "Cron format - every 5 minutes by default",
+      default: "0 * * * *",
+      doc: "Cron format - every hour",
     },
     synchronizeBlocks: {
       env: "SCHEDULE_SYNCHRONIZE_BLOCKS",

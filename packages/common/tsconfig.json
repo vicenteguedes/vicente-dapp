@@ -1,29 +1,12 @@
 {
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "CommonJS",
-    "lib": ["ESNext", "ES6", "ScriptHost", "ES2016.Array.Include"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "strict": false,
-    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "esModuleInterop": true,
-
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "strictNullChecks": true,
-    "outDir": "./dist"
+    "strictPropertyInitialization": false
   },
-  "exclude": ["node_modules", "../../node_modules"],
-  "include": ["src/**/*.ts", "src/tasks.config.cjs"]
+  "exclude": ["node_modules"],
+  "include": ["src"]
 }

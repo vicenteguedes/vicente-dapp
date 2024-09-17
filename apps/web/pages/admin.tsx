@@ -5,7 +5,7 @@ import { useClient } from "@/contexts/ClientProvider";
 import { Address } from "viem";
 import { useSnackbar } from "notistack";
 import CustomTextField from "@/components/CustomTextField";
-import { ERC20_ABI, SEPOLIA_DATA } from "@repo/common";
+import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 
 export default function Admin() {
   const { account, client, isOwner } = useClient();

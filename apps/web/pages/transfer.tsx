@@ -6,7 +6,7 @@ import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomTextField from "@/components/CustomTextField";
-import { ERC20_ABI, SEPOLIA_DATA, SEPOLIA_TX_BASE_URL } from "@repo/common";
+import { ERC20_ABI, SEPOLIA_DATA, SEPOLIA_TX_BASE_URL } from "@/utils/constants";
 
 export default function Transfer() {
   const { account, client } = useClient();

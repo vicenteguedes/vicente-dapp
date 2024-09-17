@@ -13,7 +13,7 @@ import {
   WalletActions,
 } from "viem";
 import { enqueueSnackbar } from "notistack";
-import { ERC20_ABI, SEPOLIA_DATA } from "@repo/common";
+import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
