@@ -5,7 +5,7 @@ import * as schedule from "node-schedule";
 import { synchronizeTransactions } from "./transactions";
 import { synchronizeBlocks } from "./blocks";
 import { logger } from "@repo/logger";
-import { SEPOLIA_DATA } from "./utils/constants";
+import { SEPOLIA_DATA } from "@repo/common";
 
 const run = async () => {
   initViemClient();
@@ -15,7 +15,11 @@ const run = async () => {
   const c = config.get("schedule");
 
   // reset syncing status
-  await db.Contract.getRepository().createQueryBuilder().update({ networkId: SEPOLIA_DATA.chainId }).set({ isSyncing: false }).execute();
+  await db.Contract.getRepository()
+    .createQueryBuilder()
+    .update({ networkId: SEPOLIA_DATA.networkId })
+    .set({ isSyncing: false })
+    .execute();
 
   schedule.scheduleJob(c.synchronizeTransactions, synchronizeTransactions);
 

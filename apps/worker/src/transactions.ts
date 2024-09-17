@@ -1,30 +1,11 @@
 import { parseAbi } from "viem";
-import { BATCH_SIZE, EARLIEST_BLOCK, SEPOLIA_DATA } from "./utils/constants";
 import { viemClient } from "./viem";
-import { Block, Contract, Transaction } from "@repo/database";
+import { Contract, Transaction } from "@repo/database";
 import { logger } from "@repo/logger";
+import { BATCH_SIZE, EARLIEST_BLOCK, SEPOLIA_DATA } from "@repo/common";
+import { formatTransaction, insertEmptyBlocks, TransactionLog, tryBulkInsert } from "@repo/common";
 
-interface TransactionLog {
-  address: string;
-  args: {
-    from?: string;
-    to?: string;
-    owner?: string;
-    spender?: string;
-    value: bigint;
-  };
-  blockHash: string;
-  blockNumber: bigint;
-  data: string;
-  eventName: string;
-  logIndex: number;
-  removed: boolean;
-  topics: string[];
-  transactionHash: string;
-  transactionIndex: number;
-}
-
-export const loadBatchLogs = async (fromBlock: bigint, toBlock: bigint): Promise<TransactionLog[]> =>
+export const loadBatchLogs = async (fromBlock: bigint, toBlock: bigint) =>
   viemClient.getLogs({
     address: SEPOLIA_DATA.tokens[0].address,
     events: parseAbi([
@@ -33,41 +14,7 @@ export const loadBatchLogs = async (fromBlock: bigint, toBlock: bigint): Promise
     ]),
     fromBlock,
     toBlock,
-  }) as unknown as TransactionLog[];
-
-// insert empty blocks to fetch the timestamp later
-const insertBlocks = async (logs: TransactionLog[]) => {
-  const uniqueBlockNumbers = Array.from(new Set(logs.map((log) => Number(log.blockNumber))));
-  if (!uniqueBlockNumbers.length) return;
-
-  try {
-    // try to bulk insert
-    await Block.insert(uniqueBlockNumbers.map(formatBlock));
-  } catch (error) {
-    // if bulk insert fails, insert one by one
-    await Promise.all(
-      uniqueBlockNumbers.map((blockNumber) => Block.insert(formatBlock(blockNumber)).catch(() => undefined))
-    );
-  }
-};
-
-const insertTransactions = async (logs: TransactionLog[]) => {
-  try {
-    // try to bulk insert
-    await Transaction.insert(logs.map(formatLog));
-  } catch (error) {
-    // if bulk insert fails, insert one by one
-    logger.error({ error }, "Error inserting transactions");
-
-    await Promise.all(
-      logs.map((log) =>
-        Transaction.insert(formatLog(log)).catch((error) => {
-          logger.error({ error, log }, "Error inserting transaction");
-        })
-      )
-    );
-  }
-};
+  }) as Promise<TransactionLog[]>;
 
 const getEarliestBlockToSync = async (contract: Contract) => {
   if (!contract.isSynced) {
@@ -83,7 +30,7 @@ const getEarliestBlockToSync = async (contract: Contract) => {
 };
 
 export const synchronizeTransactions = async () => {
-  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.chainId } });
+  const contract = await Contract.findOneOrFail({ where: { networkId: SEPOLIA_DATA.networkId } });
 
   if (contract.isSyncing) {
     logger.info({ contract }, "Contract sync is in progress");
@@ -111,8 +58,10 @@ export const synchronizeTransactions = async () => {
 
       logger.info({ fromBlock, toBlock: blockNumber, logs }, "Fetched transactions");
 
-      await insertBlocks(logs);
-      await insertTransactions(logs);
+      await insertEmptyBlocks(logs);
+      const transactions = logs.map(formatTransaction);
+
+      await tryBulkInsert(Transaction.getRepository(), transactions);
 
       blockNumber = BigInt(Math.max(Number(blockNumber) - BATCH_SIZE - 1, Number(synchronizeUntilBlockNumber)));
     }
@@ -126,18 +75,3 @@ export const synchronizeTransactions = async () => {
     await contract.save();
   }
 };
-
-const formatBlock = (blockNumber: number) => ({
-  number: blockNumber,
-});
-
-const formatLog = (log: TransactionLog) => ({
-  blockNumber: Number(log.blockNumber),
-  transactionHash: log.transactionHash,
-  contractAddress: log.address,
-  eventName: log.eventName,
-  from: log.args.from || log.args.owner,
-  to: log.args.to || log.args.spender,
-  value: log.args.value,
-  logIndex: log.logIndex,
-});

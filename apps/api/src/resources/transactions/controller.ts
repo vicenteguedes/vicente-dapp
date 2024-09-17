@@ -1,5 +1,5 @@
-import { SEPOLIA_DATA, ZERO_ADDRESS } from "../../utils/constants";
 import { DailyVolume, Transaction } from "@repo/api-types";
+import { SEPOLIA_DATA, ZERO_ADDRESS } from "@repo/common";
 import { Block, Contract, db, Transaction as TransactionEntity } from "@repo/database";
 import { logger } from "@repo/logger";
 import { Request, Response } from "express";

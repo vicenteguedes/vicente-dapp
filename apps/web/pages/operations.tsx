@@ -4,9 +4,9 @@ import { Box, Button, MenuItem, Select, Typography } from "@mui/material";
 import { useState } from "react";
 import { Address, formatEther, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
-import { ERC20_ABI, ETH_DEAD_ADDRESS, SEPOLIA_DATA } from "@/utils/constants";
 import { useSnackbar } from "notistack";
 import CustomTextField from "@/components/CustomTextField";
+import { SEPOLIA_DATA, ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
 
 export default function Operations() {
   const { account, client } = useClient();
@@ -130,12 +130,9 @@ export default function Operations() {
       args: [fromAddress || account, toAddress],
     });
 
-    enqueueSnackbar(
-      `Allowance from owner to spender: ${formatEther(data as bigint)} BUSD`,
-      {
-        variant: "success",
-      }
-    );
+    enqueueSnackbar(`Allowance from owner to spender: ${formatEther(data as bigint)} BUSD`, {
+      variant: "success",
+    });
   };
 
   const renderFields = () => {
@@ -235,13 +232,7 @@ export default function Operations() {
       <Typography variant="h4" mt={2} mb={4} fontWeight={"bold"}>
         Operations
       </Typography>
-      <Box
-        component="form"
-        noValidate
-        autoComplete="off"
-        mt={2}
-        textAlign={"left"}
-      >
+      <Box component="form" noValidate autoComplete="off" mt={2} textAlign={"left"}>
         <Select
           sx={{ borderRadius: 2 }}
           fullWidth

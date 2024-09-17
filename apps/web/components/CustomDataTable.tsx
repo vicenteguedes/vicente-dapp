@@ -1,72 +1,82 @@
-import React from "react";
-import { Box, CircularProgress, styled } from "@mui/material";
-import { DataGrid, GridColDef } from "@mui/x-data-grid";
+import React, { useEffect, useState } from "react";
+import { Box, darken, lighten, styled, Theme } from "@mui/material";
+import { DataGrid, GridColDef, GridRowIdGetter, GridValidRowModel } from "@mui/x-data-grid";
 
-const StyledGridOverlay = styled("div")(({ theme }) => ({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  height: "100%",
-  backgroundColor: "rgba(18, 18, 18, 0.9)",
+const getBackgroundColor = (color: string, theme: Theme, coefficient: number) => ({
+  backgroundColor: darken(color, coefficient),
   ...theme.applyStyles("light", {
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: lighten(color, coefficient),
   }),
+});
+
+const StyledDataGrid = styled(DataGrid)(({ theme }) => ({
+  "& .super-app-theme--new": {
+    ...getBackgroundColor(theme.palette.success.main, theme, 0.3),
+    "&:hover": {
+      ...getBackgroundColor(theme.palette.success.main, theme, 0.6),
+    },
+    "&.Mui-selected": {
+      ...getBackgroundColor(theme.palette.success.main, theme, 0.5),
+      "&:hover": {
+        ...getBackgroundColor(theme.palette.success.main, theme, 0.4),
+      },
+    },
+  },
 }));
-
-function CircularProgressWithLabel() {
-  return (
-    <Box sx={{ position: "relative", display: "inline-flex" }}>
-      <CircularProgress variant="determinate" />
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      ></Box>
-    </Box>
-  );
-}
-
-function CustomLoadingOverlay() {
-  return (
-    <StyledGridOverlay>
-      <CircularProgressWithLabel />
-      <Box sx={{ mt: 2 }}>Loading rows…</Box>
-    </StyledGridOverlay>
-  );
-}
 
 interface CustomDataTableProps<T> {
   rows: T[];
   columns: GridColDef[];
   loading?: boolean;
-  getRowId: (row: T) => string;
+  getRowId: GridRowIdGetter<GridValidRowModel>;
   height?: number;
   minHeight?: number;
 }
 
-const CustomDataTable = <T,>({ rows, columns, loading, getRowId, minHeight, height }: CustomDataTableProps<T>) => {
+const CustomDataTable = <T extends GridValidRowModel>({
+  rows,
+  columns,
+  loading,
+  getRowId,
+  minHeight,
+  height,
+}: CustomDataTableProps<T>) => {
+  const [currentRows, setCurrentRows] = useState(rows);
+
+  const isNew = (row: T) => row.timestamp > new Date().getTime() - 3000;
+
+  useEffect(() => {
+    // timestamp is newer than 3 seconds
+    const newRows = rows.filter(isNew);
+
+    newRows.forEach((row) => {
+      const timerId = setTimeout(() => {
+        setCurrentRows((prevRows) => prevRows.map((r) => (r.id === row.id ? { ...r, status: "old" } : r)));
+      }, 3000);
+
+      return () => clearTimeout(timerId);
+    });
+  }, [currentRows]);
+
+  useEffect(() => {
+    setCurrentRows(rows.map((row) => ({ ...row, status: isNew(row) ? "new" : "old" })));
+  }, [rows]);
+
   return (
     <Box mb={1}>
-      <DataGrid
+      <StyledDataGrid
         sx={{
           height,
           minHeight,
           borderRadius: 2,
         }}
-        slots={{
-          loadingOverlay: () => <CustomLoadingOverlay />,
-        }}
-        hideFooterPagination={true}
-        hideFooter={true}
+        hideFooterPagination
+        hideFooter
         loading={loading}
-        rows={rows}
+        rows={currentRows}
         columns={columns}
         getRowId={getRowId}
+        getRowClassName={(params) => `super-app-theme--${params.row.status}`}
       />
     </Box>
   );

@@ -4,13 +4,9 @@ import { useEffect, useState } from "react";
 import { Address, Hash, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
-import {
-  ERC20_ABI,
-  SEPOLIA_DATA,
-  SEPOLIA_TX_BASE_URL,
-} from "@/utils/constants";
 import CircularProgress from "@mui/material/CircularProgress";
 import CustomTextField from "@/components/CustomTextField";
+import { ERC20_ABI, SEPOLIA_DATA, SEPOLIA_TX_BASE_URL } from "@/utils/constants";
 
 export default function Transfer() {
   const { account, client } = useClient();
@@ -56,11 +52,10 @@ export default function Transfer() {
   useEffect(() => {
     if (client && hash) {
       client.waitForTransactionReceipt({ hash }).then((receipt) => {
-        console.log(receipt);
-        enqueueSnackbar(
-          `Transaction sent successfully! ${SEPOLIA_TX_BASE_URL}/${receipt.transactionHash}`,
-          { variant: "success", autoHideDuration: 10000 }
-        );
+        enqueueSnackbar(`Transaction sent successfully! ${SEPOLIA_TX_BASE_URL}/${receipt.transactionHash}`, {
+          variant: "success",
+          autoHideDuration: 10000,
+        });
 
         setHash(undefined);
       });

@@ -1,9 +1,9 @@
 import * as React from "react";
 import { GridColDef } from "@mui/x-data-grid";
-import { ETH_DEAD_ADDRESS, ZERO_ADDRESS } from "@/utils/constants";
 import { formatCurrency } from "@/contexts/ClientProvider";
 import CustomDataTable from "./CustomDataTable";
 import { Transaction } from "@repo/api-types";
+import { ETH_DEAD_ADDRESS, ZERO_ADDRESS } from "@/utils/constants";
 
 interface DataTableProps {
   rows: Transaction[];
@@ -19,7 +19,7 @@ const columns: GridColDef[] = [
     valueGetter: (_, row) =>
       row.eventName === "Transfer" && row.from === ZERO_ADDRESS
         ? "Mint"
-        : row.eventName === "Transfer" && row.to === ETH_DEAD_ADDRESS
+        : row.eventName === "Transfer" && row.to.toLowerCase() === ETH_DEAD_ADDRESS
           ? "Burn"
           : row.eventName,
   },
@@ -50,7 +50,5 @@ const columns: GridColDef[] = [
 ];
 
 export default function ActivityDataTable({ rows, loading }: DataTableProps) {
-  return (
-    <CustomDataTable rows={rows} columns={columns} loading={loading} getRowId={(row) => `${row.id}`} height={600} />
-  );
+  return <CustomDataTable rows={rows} columns={columns} loading={loading} getRowId={(row) => row.id} height={600} />;
 }

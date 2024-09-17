@@ -2,7 +2,7 @@ import { Address, Chain } from "viem";
 import { sepolia } from "viem/chains";
 
 export const ETH_DEAD_ADDRESS = "0x000000000000000000000000000000000000dead";
-export const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx/";
+export const SEPOLIA_TX_BASE_URL = "https://sepolia.etherscan.io/tx";
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 export const PAGE_SIZE = 10;
 
@@ -10,7 +10,7 @@ export const BATCH_SIZE = 1000;
 export const EARLIEST_BLOCK = 5680636n;
 
 export interface ChainData {
-  chainId: number;
+  networkId: number;
   hexChainId: string;
   multicallAddress: Address;
   name: string;
@@ -19,7 +19,7 @@ export interface ChainData {
 }
 
 export const SEPOLIA_DATA: ChainData = {
-  chainId: 11155111,
+  networkId: 11155111,
   hexChainId: "0xAA36A7",
   name: "Base Sepolia",
   multicallAddress: sepolia.contracts.multicall3.address,

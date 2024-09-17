@@ -20,7 +20,8 @@
     "typeorm-naming-strategies": "^4.1.0",
     "viem": "^2.21.5",
     "@repo/database": "*",
-    "@repo/logger": "*"
+    "@repo/logger": "*",
+    "@repo/common": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",
