@@ -21,6 +21,9 @@ const run = async () => {
     .set({ isSyncing: false })
     .execute();
 
+  // sync transactions
+  await synchronizeTransactions();
+
   schedule.scheduleJob(c.synchronizeTransactions, synchronizeTransactions);
 
   logger.info(`Job synchronizeTransactions scheduled "${c.synchronizeTransactions}"`);
