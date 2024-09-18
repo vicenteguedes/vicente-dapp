@@ -15,6 +15,12 @@ import {
 import { enqueueSnackbar } from "notistack";
 import { ERC20_ABI, SEPOLIA_DATA } from "@/utils/constants";
 
+interface Balances {
+  ETH: string;
+  BUSD: string;
+  WBTC: string;
+}
+
 interface ConnectClientContextProps {
   connect: () => Promise<void>;
   client: (PublicActions & WalletActions) | null;
@@ -22,7 +28,7 @@ interface ConnectClientContextProps {
   providerInfo: EIP6963ProviderInfo;
   getClient: () => PublicActions & WalletActions;
   isOwner: boolean;
-  balances: { eth: string; busd: string };
+  balances: Balances;
   refreshBalances: () => Promise<void>;
   busdTotalSupply: string;
 }
@@ -32,7 +38,7 @@ const ClientContext = createContext<ConnectClientContextProps | undefined>(undef
 export const formatCurrency = (value: unknown, locale: string = "en-US") => {
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 8,
+    maximumFractionDigits: 6,
   }).format(Number(formatEther(value as bigint)) || 0);
 };
 
@@ -40,7 +46,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [account, setAccount] = useState<Address | null>(null);
   const [client, setClient] = useState<(PublicActions & WalletActions) | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
-  const [balances, setBalances] = useState({ eth: "0", busd: "0" });
+  const [balances, setBalances] = useState<Balances>({ ETH: "0", BUSD: "0", WBTC: "0" });
   const [busdTotalSupply, setBusdTotalSupply] = useState("0");
 
   const getHomeInfo = async () => {
@@ -49,11 +55,11 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     const baseContract = {
-      address: SEPOLIA_DATA.tokens[0].address,
+      address: SEPOLIA_DATA.contracts["BUSD"].address,
       abi: ERC20_ABI,
     };
 
-    const [totalSupply, owner, busdBalance] = await client.multicall({
+    const [totalSupply, owner, busdBalance, wbtcBalance] = await client.multicall({
       contracts: [
         {
           ...baseContract,
@@ -68,12 +74,18 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           functionName: "balanceOf",
           args: [account],
         },
+        {
+          address: SEPOLIA_DATA.contracts["WBTC"].address,
+          abi: ERC20_ABI,
+          functionName: "balanceOf",
+          args: [account],
+        },
       ],
       multicallAddress: SEPOLIA_DATA.multicallAddress,
       allowFailure: false,
     });
 
-    setBusdTotalSupply(formatCurrency(totalSupply));
+    setBusdTotalSupply(totalSupply as string);
     setIsOwner(owner === account);
 
     const ethBalance = await client.getBalance({
@@ -81,8 +93,9 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     });
 
     setBalances({
-      eth: formatCurrency(ethBalance).toString(),
-      busd: formatCurrency(busdBalance).toString(),
+      ETH: formatCurrency(ethBalance.toString()),
+      BUSD: busdBalance as string,
+      WBTC: wbtcBalance as string,
     });
   };
 

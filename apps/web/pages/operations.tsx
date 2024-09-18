@@ -61,7 +61,7 @@ export default function Operations() {
     try {
       const data = await client.writeContract({
         account: fromAddress || account,
-        address: SEPOLIA_DATA.tokens[0].address,
+        address: SEPOLIA_DATA.contracts["BUSD"].address,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [toAddress, parseEther(tokenAmount)],
@@ -85,7 +85,7 @@ export default function Operations() {
 
     // transfer to dead address
     const hash = await client.writeContract({
-      address: SEPOLIA_DATA.tokens[0].address,
+      address: SEPOLIA_DATA.contracts["BUSD"].address,
       chain: SEPOLIA_DATA.chain,
       account,
       abi: ERC20_ABI,
@@ -104,7 +104,7 @@ export default function Operations() {
     }
 
     await client.writeContract({
-      address: SEPOLIA_DATA.tokens[0].address,
+      address: SEPOLIA_DATA.contracts["BUSD"].address,
       abi: ERC20_ABI,
       functionName: "mint",
       account,
@@ -124,7 +124,7 @@ export default function Operations() {
 
     const data = await client.readContract({
       account: fromAddress || account,
-      address: SEPOLIA_DATA.tokens[0].address,
+      address: SEPOLIA_DATA.contracts["BUSD"].address,
       abi: ERC20_ABI,
       functionName: "allowance",
       args: [fromAddress || account, toAddress],

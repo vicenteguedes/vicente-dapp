@@ -1,9 +1,4 @@
-import {
-  Accordion,
-  AccordionSummary,
-  Typography,
-  AccordionDetails,
-} from "@mui/material";
+import { Accordion, AccordionSummary, Typography, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface AccordionSectionProps {
@@ -12,11 +7,7 @@ interface AccordionSectionProps {
   defaultExpanded?: boolean;
 }
 
-const AccordionSection = ({
-  title,
-  children,
-  defaultExpanded = true,
-}: AccordionSectionProps) => (
+const AccordionSection = ({ title, children, defaultExpanded = false }: AccordionSectionProps) => (
   <Accordion defaultExpanded={defaultExpanded}>
     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
       <Typography variant="h5">{title}</Typography>

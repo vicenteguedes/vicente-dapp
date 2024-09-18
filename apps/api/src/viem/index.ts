@@ -1,7 +1,7 @@
 import { SEPOLIA_DATA } from "@repo/common";
+import { logger } from "@repo/logger";
 import { createPublicClient, parseAbi, PublicClient, webSocket } from "viem";
 import { handleNewLogs } from "../resources/logs/utils";
-import { logger } from "@repo/logger";
 
 export let viemClient: PublicClient;
 
@@ -10,12 +10,16 @@ export const initViemClient = () => {
     return viemClient;
   }
 
-  let unwatchFunction: () => void;
+  let unwatchFunction: (() => void) | null = null;
 
   const initClient = () => {
     viemClient = createPublicClient({
-      transport: webSocket("wss://sepolia.drpc.org"),
+      transport: webSocket("wss://ethereum-sepolia-rpc.publicnode.com"),
     });
+
+    if (unwatchFunction) {
+      unwatchFunction();
+    }
 
     unwatchFunction = viemClient.watchEvent({
       address: SEPOLIA_DATA.tokens[0].address,
@@ -27,10 +31,12 @@ export const initViemClient = () => {
       onError: (error) => {
         logger.error({ error }, "Websocket error");
 
-        unwatchFunction();
+        unwatchFunction?.();
+
+        unwatchFunction = null;
 
         // delay slightly before restarting to avoid immediate reconnection loops
-        setTimeout(() => initClient(), 1000);
+        setTimeout(() => initClient(), 2000);
       },
     });
   };

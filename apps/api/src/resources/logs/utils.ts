@@ -1,7 +1,7 @@
-import { wsServer } from "../../websocketServer";
 import { formatTransaction, insertEmptyBlocks, tryBulkInsert } from "@repo/common";
 import { Transaction } from "@repo/database";
 import { logger } from "@repo/logger";
+import { wsServer } from "../../websocketServer";
 
 export const handleNewLogs = async (logs: any[]) => {
   logger.info({ logs }, "Received new logs");
@@ -15,7 +15,7 @@ export const handleNewLogs = async (logs: any[]) => {
   );
 
   wsServer.clients.forEach((client) => {
-    if ((client as any)._readyState === WebSocket.OPEN) {
+    if ((client as any)._readyState === 1) {
       client.send(data);
     }
   });
