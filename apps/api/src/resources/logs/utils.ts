@@ -15,7 +15,7 @@ export const handleNewLogs = async (logs: any[]) => {
   );
 
   wsServer.clients.forEach((client) => {
-    if ((client as any)._readyState === 1) {
+    if ((client as any)._readyState === WebSocket.OPEN) {
       client.send(data);
     }
   });
