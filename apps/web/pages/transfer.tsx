@@ -30,7 +30,7 @@ export default function Transfer() {
       }
 
       const hash = await client.writeContract({
-        address: SEPOLIA_DATA.tokens[0].address,
+        address: SEPOLIA_DATA.contracts["BUSD"].address,
         chain: SEPOLIA_DATA.chain,
         account: fromAddress || account,
         abi: ERC20_ABI,

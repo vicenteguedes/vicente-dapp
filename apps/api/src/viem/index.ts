@@ -1,7 +1,7 @@
 import { SEPOLIA_DATA } from "@repo/common";
-import { createPublicClient, parseAbi, PublicClient, webSocket } from "viem";
-import { handleNewLogs } from "../resources/logs/utils";
 import { logger } from "@repo/logger";
+import { createPublicClient, parseAbi, parseAbiItem, PublicClient, webSocket } from "viem";
+import { handleNewLogs, handleSync } from "../resources/websockets/utils";
 
 export let viemClient: PublicClient;
 
@@ -10,27 +10,41 @@ export const initViemClient = () => {
     return viemClient;
   }
 
-  let unwatchFunction: () => void;
+  let unwatchTransactionsFunction: (() => void) | null = null;
+  let unwatchSyncFunction: (() => void) | null = null;
 
   const initClient = () => {
     viemClient = createPublicClient({
       transport: webSocket("wss://sepolia.drpc.org"),
     });
 
-    unwatchFunction = viemClient.watchEvent({
-      address: SEPOLIA_DATA.tokens[0].address,
+    // watch transaction events
+    unwatchTransactionsFunction = viemClient.watchEvent({
+      address: SEPOLIA_DATA.contracts["BUSD"].address,
       events: parseAbi([
         "event Approval(address indexed owner, address indexed spender, uint256 value)",
         "event Transfer(address indexed from, address indexed to, uint256 value)",
       ]),
       onLogs: handleNewLogs,
       onError: (error) => {
-        logger.error({ error }, "Websocket error");
+        logger.error({ error }, "Transactions websocket error");
 
-        unwatchFunction();
+        unwatchTransactionsFunction?.();
+        unwatchSyncFunction?.();
 
-        // delay slightly before restarting to avoid immediate reconnection loops
-        setTimeout(() => initClient(), 1000);
+        setTimeout(() => {
+          initClient();
+        }, 3000);
+      },
+    });
+
+    // watch sync events
+    unwatchSyncFunction = viemClient.watchEvent({
+      address: SEPOLIA_DATA.contracts["BUSD_WBTC"].address,
+      event: parseAbiItem("event Sync(uint112 reserve0, uint112 reserve1)"),
+      onLogs: handleSync,
+      onError: (error) => {
+        logger.error({ error }, "Sync websocket error");
       },
     });
   };

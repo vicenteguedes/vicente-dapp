@@ -22,7 +22,7 @@ export const getAllowances = async (req: Request, res: Response) => {
   const userApprovalAddresses = Array.from(new Set(userApprovals.map(({ to }) => to)));
 
   const baseContract = {
-    address: SEPOLIA_DATA.tokens[0].address,
+    address: SEPOLIA_DATA.contracts["BUSD"].address,
     abi: ERC20_ABI,
   };
 

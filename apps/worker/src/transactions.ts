@@ -7,7 +7,7 @@ import { formatTransaction, insertEmptyBlocks, TransactionLog, tryBulkInsert } f
 
 export const loadBatchLogs = async (fromBlock: bigint, toBlock: bigint) =>
   viemClient.getLogs({
-    address: SEPOLIA_DATA.tokens[0].address,
+    address: SEPOLIA_DATA.contracts["BUSD"].address,
     events: parseAbi([
       "event Approval(address indexed owner, address indexed spender, uint256 value)",
       "event Transfer(address indexed from, address indexed to, uint256 value)",
