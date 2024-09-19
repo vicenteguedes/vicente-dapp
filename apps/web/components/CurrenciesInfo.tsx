@@ -16,44 +16,42 @@ export default function CurrenciesInfo() {
           marginTop: 4,
         }}
       >
-        <Box display="flex" justifyContent="space-between" gap={2}>
-          <Paper
-            sx={{
-              flex: 1,
-              p: 2,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1,
-              boxShadow: "none",
-              minWidth: 130,
-            }}
-          >
-            <Typography variant="body2" color="textSecondary">
-              ETH Balance
-            </Typography>
-            <Typography variant="h4">{balances.ETH}</Typography>
-          </Paper>
-
-          <Paper
-            sx={{
-              flex: 1,
-              p: 2,
-              display: "flex",
-              flexDirection: "column",
-              gap: 1,
-              boxShadow: "none",
-            }}
-          >
-            <Typography variant="body2" color="textSecondary">
-              BUSD Balance
-            </Typography>
-            <Typography variant="h4">{Number(balances.BUSD).toExponential(1)}</Typography>
-          </Paper>
-        </Box>
+        <Paper
+          sx={{
+            flex: 1,
+            p: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            boxShadow: "none",
+            minWidth: 130,
+          }}
+        >
+          <Typography variant="body2" color="textSecondary">
+            ETH Balance
+          </Typography>
+          <Typography variant="h4">{balances.ETH}</Typography>
+        </Paper>
 
         <Paper
           sx={{
-            p: 2,
+            flex: 1,
+            p: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            boxShadow: "none",
+          }}
+        >
+          <Typography variant="body2" color="textSecondary">
+            BUSD Balance
+          </Typography>
+          <Typography variant="h4">{Number(balances.BUSD).toExponential(4)}</Typography>
+        </Paper>
+
+        <Paper
+          sx={{
+            p: 1,
             display: "flex",
             flexDirection: "column",
             gap: 1,

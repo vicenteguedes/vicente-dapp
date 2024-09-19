@@ -1,5 +1,5 @@
 import { useClient } from "@/contexts/ClientProvider";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, IconButton, Typography } from "@mui/material";
 import CustomTextField from "./CustomTextField";
 import { forwardRef, useEffect, useState } from "react";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -8,82 +8,58 @@ import { NumericFormat, NumericFormatProps } from "react-number-format";
 import { Address, formatUnits, maxUint256, parseUnits } from "viem";
 import { SEPOLIA_DATA, UNISWAP_ROUTER_ABI, UNISWAP_V2_PAIR_ABI } from "@/utils/constants";
 import { enqueueSnackbar } from "notistack";
+import SettingsIcon from "@mui/icons-material/Settings";
+import SettingsDialog from "./SettingsDialog";
 
-// TODO: make state
-const SLIPPAGE_IN_PERCENT = 5n; // 5%;
+const DEFAULT_SLIPPAGE_IN_PERCENT = 5n; // 5%;
 
-interface CurrencyData {
+interface TokenData {
   name: string;
-  reserve?: bigint;
   amount?: string;
   iconUrl: string;
   decimals: number;
   address: string;
 }
 
-interface CustomProps {
-  onChange: (event: { target: { name: string; value: string } }) => void;
+interface NumericCustomProps {
   name: string;
   decimalScale: number;
 }
 
 const cleanNumericString = (str: string) => str.replace(/[^\d.-]/g, "");
 
-const NumericFormatCustom: any = forwardRef<NumericFormatProps, CustomProps>(function NumericFormatCustom(props, ref) {
-  const { onChange, decimalScale, ...other } = props;
+const NumericFormatCustom = forwardRef<NumericFormatProps, NumericCustomProps>(
+  function NumericFormatCustom(props, ref) {
+    const { decimalScale, ...other } = props;
 
-  return <NumericFormat {...other} getInputRef={ref} thousandSeparator decimalScale={decimalScale} />;
-});
+    return <NumericFormat {...other} getInputRef={ref} thousandSeparator decimalScale={decimalScale} />;
+  }
+);
 
 export default function SwapModule() {
-  const { client, account, balances } = useClient();
+  const { client, account, balances, reserves } = useClient();
 
-  const [inCurrency, setInCurrency] = useState<CurrencyData>({
+  const getCurrencyReserve = (currencyData: TokenData) => reserves[currencyData.name as keyof typeof reserves];
+
+  const [slippage, setSlippage] = useState<bigint>(DEFAULT_SLIPPAGE_IN_PERCENT);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const [inToken, setInCurrency] = useState<TokenData>({
     name: "BUSD",
     iconUrl: "https://smardex.io/images/tokens/busd.svg",
     decimals: SEPOLIA_DATA.contracts["BUSD"].decimals,
     address: SEPOLIA_DATA.contracts["BUSD"].address,
   });
 
-  const [outCurrency, setOutCurrency] = useState<CurrencyData>({
+  const [outToken, setOutCurrency] = useState<TokenData>({
     name: "WBTC",
     iconUrl: "https://smardex.io/images/tokens/wbtc.svg",
     decimals: SEPOLIA_DATA.contracts["WBTC"].decimals,
     address: SEPOLIA_DATA.contracts["WBTC"].address,
   });
 
-  // determine whether is the in or out currency that the user is swapping
+  // determine whether it is the in or the out currency that the user edited last
   const [isInCurrency, setIsInCurrency] = useState(true);
-
-  useEffect(() => {
-    const fetchReserves = async () => {
-      if (!client) {
-        return;
-      }
-
-      try {
-        const [token0Reserve, token1Reserve] = (await client.readContract({
-          address: SEPOLIA_DATA.contracts["BUSD_WBTC"].address,
-          abi: UNISWAP_V2_PAIR_ABI,
-          functionName: "getReserves",
-        })) as bigint[];
-
-        setInCurrency({
-          ...inCurrency,
-          reserve: token0Reserve,
-        });
-
-        setOutCurrency({
-          ...outCurrency,
-          reserve: token1Reserve,
-        });
-      } catch (error) {
-        console.error("Error fetching reserves:", error);
-      }
-    };
-
-    fetchReserves();
-  }, [client]);
 
   useEffect(() => {
     // check if the user has approved the router to spend tokens and approve if not
@@ -94,7 +70,7 @@ export default function SwapModule() {
 
       try {
         const allowance = (await client.readContract({
-          address: inCurrency.address as Address,
+          address: inToken.address as Address,
           abi: UNISWAP_V2_PAIR_ABI,
           functionName: "allowance",
           args: [account, SEPOLIA_DATA.contracts["UNISWAP_ROUTER"].address],
@@ -103,7 +79,7 @@ export default function SwapModule() {
         if (allowance <= 0n) {
           await client.writeContract({
             account: account as Address,
-            address: inCurrency.address as Address,
+            address: inToken.address as Address,
             abi: UNISWAP_V2_PAIR_ABI,
             functionName: "approve",
             args: [SEPOLIA_DATA.contracts["UNISWAP_ROUTER"].address, maxUint256],
@@ -116,72 +92,79 @@ export default function SwapModule() {
     };
 
     assertHasAllowance();
-  }, [client]);
+  }, [inToken?.name]);
+
+  const handleSettingsClose = () => setSettingsOpen(false);
+  const handleSettingsSave = (newSlippage: bigint) => setSlippage(newSlippage);
 
   const executeSwap = async () => {
     if (!client) {
       return;
     }
 
-    const amountIn = parseUnits(inCurrency.amount!.toString(), inCurrency.decimals);
-    const amountOut = parseUnits(outCurrency.amount!.toString(), outCurrency.decimals);
-    const path = [inCurrency.address, outCurrency.address];
+    const amountIn = parseUnits(cleanNumericString(inToken.amount!), inToken.decimals);
+    const amountOut = parseUnits(cleanNumericString(outToken.amount!), outToken.decimals);
+
+    const path = [inToken.address, outToken.address];
 
     // expires in 20 minutes
     const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
     if (isInCurrency) {
-      await swapTokenForExactToken(amountIn, amountOut, path, deadline);
-    } else {
       await swapExactTokenForToken(amountIn, amountOut, path, deadline);
+    } else {
+      await swapTokenForExactToken(amountIn, amountOut, path, deadline);
     }
   };
 
   const switchTokens = () => {
-    const temp = outCurrency;
-    setOutCurrency(inCurrency);
+    const temp = outToken;
+    setOutCurrency(inToken);
     setInCurrency(temp);
   };
 
-  const getExactTokenForTokenAmount = (newInAmount: string) => {
-    if (!newInAmount || !inCurrency.reserve || !outCurrency.reserve) {
+  const getAmountOut = (newInAmount: string) => {
+    const inCurrencyReserve = getCurrencyReserve(inToken);
+    const outCurrencyReserve = getCurrencyReserve(outToken);
+
+    if (!newInAmount || !inCurrencyReserve || !outCurrencyReserve) {
       return 0;
     }
 
-    const parsedAmountIn = parseUnits(newInAmount, inCurrency.decimals);
+    const parsedAmountIn = parseUnits(newInAmount, inToken.decimals);
 
-    const numerator = parsedAmountIn * 997n * outCurrency.reserve;
-    const denominator = inCurrency.reserve * 1000n + parsedAmountIn * 997n;
+    const numerator = parsedAmountIn * 997n * outCurrencyReserve;
+    const denominator = inCurrencyReserve * 1000n + parsedAmountIn * 997n;
     const amountOut = numerator / denominator;
 
-    if (amountOut > outCurrency.reserve) {
-      return null;
-    }
-
-    return formatUnits(amountOut, outCurrency.decimals);
+    return formatUnits(amountOut, outToken.decimals);
   };
 
-  const getTokenForExactTokenAmount = (newOutAmount: string) => {
-    if (!newOutAmount || !inCurrency.reserve || !outCurrency.reserve) {
+  const getAmountIn = (newOutAmount: string) => {
+    const inCurrencyReserve = getCurrencyReserve(inToken);
+    const outCurrencyReserve = getCurrencyReserve(outToken);
+
+    if (!newOutAmount || !inCurrencyReserve || !outCurrencyReserve) {
       return 0;
     }
 
-    const parsedAmountOut = parseUnits(newOutAmount, outCurrency.decimals);
+    const parsedAmountOut = parseUnits(newOutAmount, outToken.decimals);
 
-    const numerator = inCurrency.reserve * parsedAmountOut * 1000n;
-    const denominator = outCurrency.reserve * 997n;
+    const numerator = inCurrencyReserve * parsedAmountOut * 1000n;
+    const denominator = (outCurrencyReserve - parsedAmountOut) * 997n;
     const amountIn = numerator / denominator + 1n;
 
-    if (amountIn > inCurrency.reserve) {
-      return null;
-    }
-
-    return formatUnits(amountIn, inCurrency.decimals);
+    return formatUnits(amountIn, inToken.decimals);
   };
 
   const swapExactTokenForToken = async (amountIn: bigint, amountOut: bigint, path: string[], deadline: number) => {
-    const slippageReduction = (amountOut * SLIPPAGE_IN_PERCENT) / BigInt(100);
+    const slippageReduction = (amountOut * slippage) / BigInt(100);
     const amountOutMin = amountOut - slippageReduction;
+
+    if (amountIn > BigInt(balances[inToken.name as keyof typeof balances])) {
+      enqueueSnackbar("Insufficient balance", { variant: "error" });
+      return;
+    }
 
     await client!
       .writeContract({
@@ -202,8 +185,18 @@ export default function SwapModule() {
   };
 
   const swapTokenForExactToken = async (amountIn: bigint, amountOut: bigint, path: string[], deadline: number) => {
-    const slippageExcedent = (amountIn * SLIPPAGE_IN_PERCENT) / BigInt(100);
+    const slippageExcedent = (amountIn * slippage) / BigInt(100);
     const amountInMax = amountIn + slippageExcedent;
+
+    if (amountInMax > BigInt(balances[inToken.name as keyof typeof balances])) {
+      enqueueSnackbar("Insufficient balance", { variant: "error" });
+      return;
+    }
+
+    if (amountOut > getCurrencyReserve(outToken)) {
+      enqueueSnackbar("Insufficient liquidity", { variant: "error" });
+      return;
+    }
 
     await client!
       .writeContract({
@@ -224,49 +217,39 @@ export default function SwapModule() {
   };
 
   const handleInInputChange = (e: any) => {
-    const exactTokenForTokenAmount = getExactTokenForTokenAmount(cleanNumericString(e.target.value));
-
-    if (exactTokenForTokenAmount === null) {
-      console.log("exactTokenForTokenAmount is null");
-      return;
-    }
+    const amountOut = getAmountOut(cleanNumericString(e.target.value));
 
     setIsInCurrency(true);
 
     setInCurrency({
-      ...inCurrency,
+      ...inToken,
       amount: e.target.value,
     });
 
     setOutCurrency({
-      ...outCurrency,
-      amount: exactTokenForTokenAmount ? exactTokenForTokenAmount.toString() : "",
+      ...outToken,
+      amount: amountOut ? amountOut.toString() : "",
     });
   };
 
   const handleOutInputChange = (e: any) => {
-    const tokenForExactTokenAmount = getTokenForExactTokenAmount(cleanNumericString(e.target.value));
-
-    if (tokenForExactTokenAmount === null) {
-      console.log("tokenForExactTokenAmount is null");
-      return;
-    }
+    const amountIn = getAmountIn(cleanNumericString(e.target.value));
 
     setIsInCurrency(false);
 
     setOutCurrency({
-      ...outCurrency,
+      ...outToken,
       amount: e.target.value,
     });
 
     setInCurrency({
-      ...inCurrency,
-      amount: tokenForExactTokenAmount ? tokenForExactTokenAmount.toString() : "",
+      ...inToken,
+      amount: amountIn ? amountIn.toString() : "",
     });
   };
 
   const renderCurrencyInputField = (
-    currency: CurrencyData,
+    currency: TokenData,
     handleInputChange: (e: any) => void,
     withMaxButton = false
   ) => {
@@ -283,9 +266,9 @@ export default function SwapModule() {
           onInput={handleInputChange}
           slotProps={{
             input: {
-              inputComponent: NumericFormatCustom,
+              inputComponent: NumericFormatCustom as any,
               inputProps: {
-                decimalScale: currency.name === "BUSD" ? 2 : 8,
+                decimalScale: currency.name === "BUSD" ? 4 : 8,
               },
             },
           }}
@@ -320,13 +303,19 @@ export default function SwapModule() {
           marginTop: 4,
         }}
       >
-        <Box>
-          <Typography mt={1} mb={2} variant="body1" color="textSecondary">
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography mb={2} variant="body1" color="textSecondary">
             Swap
           </Typography>
 
+          <IconButton onClick={() => setSettingsOpen(true)}>
+            <SettingsIcon />
+          </IconButton>
+        </Box>
+
+        <Box>
           <Box display="flex" flexDirection="column">
-            {renderCurrencyInputField(inCurrency, handleInInputChange, true)}
+            {renderCurrencyInputField(inToken, handleInInputChange, true)}
 
             <Button
               sx={{
@@ -341,7 +330,7 @@ export default function SwapModule() {
               <SwapVertIcon />
             </Button>
 
-            {renderCurrencyInputField(outCurrency, handleOutInputChange)}
+            {renderCurrencyInputField(outToken, handleOutInputChange)}
 
             <Button
               variant="contained"
@@ -350,13 +339,15 @@ export default function SwapModule() {
               size="large"
               onClick={executeSwap}
               style={{ marginTop: 20, borderRadius: 6 }}
-              disabled={!inCurrency.amount || !outCurrency.amount}
+              disabled={!inToken.amount || !outToken.amount}
             >
               Swap
             </Button>
           </Box>
         </Box>
       </Box>
+
+      <SettingsDialog open={settingsOpen} onClose={handleSettingsClose} onSave={handleSettingsSave} />
     </Box>
   );
 }

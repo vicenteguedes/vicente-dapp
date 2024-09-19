@@ -15,7 +15,7 @@ import Image from "next/image";
 const CLIENT_PAGES = ["Transfer", "Operations", "Admin"];
 
 function NavBar() {
-  const { account, refreshBalances, providerInfo } = useClient();
+  const { account, refreshData, providerInfo } = useClient();
 
   return (
     <AppBar position="static" style={{ marginBottom: 10 }}>
@@ -70,7 +70,7 @@ function NavBar() {
 
               <Tooltip title="Refresh information">
                 <IconButton
-                  onClick={refreshBalances}
+                  onClick={refreshData}
                   sx={{
                     display: { xs: "none", md: "flex", color: "white" },
                     mr: 1,

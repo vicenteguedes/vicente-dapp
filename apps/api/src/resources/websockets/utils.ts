@@ -4,7 +4,7 @@ import { logger } from "@repo/logger";
 import { wsServer } from "../../websocketServer";
 
 export const handleNewLogs = async (logs: any[]) => {
-  logger.info({ logs }, "Received new logs");
+  logger.info({ logs }, "Received new transaction logs");
 
   const data = JSON.stringify(
     logs.map((log) => ({
@@ -22,4 +22,22 @@ export const handleNewLogs = async (logs: any[]) => {
 
   await insertEmptyBlocks(logs);
   await tryBulkInsert(Transaction.getRepository(), logs.map(formatTransaction));
+};
+
+export const handleSync = async (logs: any[]) => {
+  logger.info({ logs }, "Received new sync logs");
+
+  const data = JSON.stringify(
+    logs.map((log) => ({
+      reserve0: log.args.reserve0.toString(),
+      reserve1: log.args.reserve1.toString(),
+      eventName: log.eventName,
+    }))
+  );
+
+  wsServer.clients.forEach((client) => {
+    if ((client as any)._readyState === 1) {
+      client.send(data);
+    }
+  });
 };
