@@ -46,7 +46,7 @@ export default function CurrenciesInfo() {
           <Typography variant="body2" color="textSecondary">
             BUSD Balance
           </Typography>
-          <Typography variant="h4">{Number(balances.BUSD).toExponential(4)}</Typography>
+          <Typography variant="h4">{balances.BUSD ? Number(balances.BUSD).toExponential(4) : 0}</Typography>
         </Paper>
 
         <Paper

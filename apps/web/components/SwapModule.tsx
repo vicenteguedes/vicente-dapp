@@ -1,5 +1,5 @@
 import { useClient } from "@/contexts/ClientProvider";
-import { Box, Button, IconButton, Typography } from "@mui/material";
+import { Box, Button, Container, IconButton, Typography } from "@mui/material";
 import CustomTextField from "./CustomTextField";
 import { FormEventHandler, forwardRef, useEffect, useState } from "react";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
@@ -277,6 +277,7 @@ export default function SwapModule() {
               },
             },
           }}
+          sx={{ width: withMaxButton ? "100%" : "85%" }}
         />
         {withMaxButton && (
           <Button
@@ -308,6 +309,7 @@ export default function SwapModule() {
           p: 3,
           marginTop: 4,
         }}
+        textAlign={"center"}
       >
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography mb={2} variant="body1" color="textSecondary">
@@ -319,7 +321,7 @@ export default function SwapModule() {
           </IconButton>
         </Box>
 
-        <Box>
+        <Container>
           <Box display="flex" flexDirection="column">
             {renderCurrencyInputField(inToken, handleInInputChange, true)}
 
@@ -337,20 +339,19 @@ export default function SwapModule() {
             </Button>
 
             {renderCurrencyInputField(outToken, handleOutInputChange)}
-
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              size="large"
-              onClick={executeSwap}
-              style={{ marginTop: 20, borderRadius: 6 }}
-              disabled={!inToken.amount || !outToken.amount}
-            >
-              Swap
-            </Button>
           </Box>
-        </Box>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            size="large"
+            onClick={executeSwap}
+            style={{ marginTop: 20, borderRadius: 6, width: "25%" }}
+            disabled={!inToken.amount || !outToken.amount}
+          >
+            Swap
+          </Button>
+        </Container>
       </Box>
 
       <SettingsDialog open={settingsOpen} onClose={handleSettingsClose} onSave={handleSettingsSave} />
