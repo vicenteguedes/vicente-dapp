@@ -1,7 +1,7 @@
 import { useClient } from "@/contexts/ClientProvider";
 import { Box, Button, IconButton, Typography } from "@mui/material";
 import CustomTextField from "./CustomTextField";
-import { forwardRef, useEffect, useState } from "react";
+import { FormEventHandler, forwardRef, useEffect, useState } from "react";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import Image from "next/image";
 import { NumericFormat, NumericFormatProps } from "react-number-format";
@@ -255,7 +255,7 @@ export default function SwapModule() {
 
   const renderCurrencyInputField = (
     currency: TokenData,
-    handleInputChange: (e: any) => void,
+    handleInputChange: FormEventHandler<HTMLDivElement>,
     withMaxButton = false
   ) => {
     return (
@@ -282,11 +282,12 @@ export default function SwapModule() {
           <Button
             variant="text"
             onClick={() => {
-              handleInputChange({
+              const event = {
                 target: {
                   value: formatUnits(BigInt(balances[currency.name as keyof typeof balances]), currency.decimals),
                 },
-              });
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleInputChange(event);
             }}
           >
             Max
