@@ -27,9 +27,10 @@ export const initViemClient = () => {
       ]),
       onLogs: handleNewLogs,
       onError: (error) => {
-        logger.error({ error }, "Websocket error");
+        logger.error({ error }, "Transactions websocket error");
 
         unwatchTransactionsFunction?.();
+        unwatchSyncFunction?.();
 
         setTimeout(() => {
           initClient();
@@ -43,13 +44,7 @@ export const initViemClient = () => {
       event: parseAbiItem("event Sync(uint112 reserve0, uint112 reserve1)"),
       onLogs: handleSync,
       onError: (error) => {
-        logger.error({ error }, "Websocket error");
-
-        unwatchSyncFunction?.();
-
-        setTimeout(() => {
-          initClient();
-        }, 3000);
+        logger.error({ error }, "Sync websocket error");
       },
     });
   };

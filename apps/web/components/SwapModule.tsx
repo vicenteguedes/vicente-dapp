@@ -61,59 +61,72 @@ export default function SwapModule() {
   // determine whether it is the in or the out currency that the user edited last
   const [isInCurrency, setIsInCurrency] = useState(true);
 
+  const [allowance, setAllowance] = useState<bigint>(0n);
+
   useEffect(() => {
-    // check if the user has approved the router to spend tokens and approve if not
-    const assertHasAllowance = async () => {
+    const fetchAllowance = async () => {
       if (!client) {
         return;
       }
 
       try {
-        const allowance = (await client.readContract({
+        const inTokenAllowance = (await client.readContract({
           address: inToken.address as Address,
           abi: UNISWAP_V2_PAIR_ABI,
           functionName: "allowance",
           args: [account, SEPOLIA_DATA.contracts["UNISWAP_ROUTER"].address],
         })) as bigint;
 
-        if (allowance <= 0n) {
-          await client.writeContract({
-            account: account as Address,
-            address: inToken.address as Address,
-            abi: UNISWAP_V2_PAIR_ABI,
-            functionName: "approve",
-            args: [SEPOLIA_DATA.contracts["UNISWAP_ROUTER"].address, maxUint256],
-            chain: SEPOLIA_DATA?.chain,
-          });
-        }
+        setAllowance(inTokenAllowance);
       } catch (error) {
         console.error("Error getting allowance:", error);
       }
     };
 
-    assertHasAllowance();
-  }, [inToken?.name]);
+    fetchAllowance();
+  }, [inToken?.name, balances]);
 
   const handleSettingsClose = () => setSettingsOpen(false);
   const handleSettingsSave = (newSlippage: bigint) => setSlippage(newSlippage);
 
   const executeSwap = async () => {
-    if (!client) {
-      return;
-    }
+    try {
+      if (!client) {
+        return;
+      }
 
-    const amountIn = parseUnits(cleanNumericString(inToken.amount!), inToken.decimals);
-    const amountOut = parseUnits(cleanNumericString(outToken.amount!), outToken.decimals);
+      const amountIn = parseUnits(cleanNumericString(inToken.amount!), inToken.decimals);
+      const amountOut = parseUnits(cleanNumericString(outToken.amount!), outToken.decimals);
 
-    const path = [inToken.address, outToken.address];
+      const path = [inToken.address, outToken.address];
 
-    // expires in 20 minutes
-    const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
+      // expires in 20 minutes
+      const deadline = Math.floor(Date.now() / 1000) + 60 * 20;
 
-    if (isInCurrency) {
-      await swapExactTokenForToken(amountIn, amountOut, path, deadline);
-    } else {
-      await swapTokenForExactToken(amountIn, amountOut, path, deadline);
+      // check allowance and approve if necessary
+      if (amountIn > allowance) {
+        await client
+          .writeContract({
+            account: account as Address,
+            address: inToken.address as Address,
+            abi: UNISWAP_V2_PAIR_ABI,
+            functionName: "approve",
+            args: [SEPOLIA_DATA.contracts["UNISWAP_ROUTER"].address, maxUint256],
+            chain: SEPOLIA_DATA.chain,
+          })
+          .then(() => {
+            setAllowance(maxUint256);
+          });
+      }
+
+      if (isInCurrency) {
+        await swapExactTokenForToken(amountIn, amountOut, path, deadline);
+      } else {
+        await swapTokenForExactToken(amountIn, amountOut, path, deadline);
+      }
+    } catch (error) {
+      console.error("Error swapping tokens:", error);
+      enqueueSnackbar("Swap failed", { variant: "error" });
     }
   };
 
@@ -177,10 +190,6 @@ export default function SwapModule() {
       })
       .then(() => {
         enqueueSnackbar("Swap successful!", { variant: "success" });
-      })
-      .catch((error) => {
-        console.error("Error swapping tokens:", error);
-        enqueueSnackbar("Swap failed", { variant: "error" });
       });
   };
 
@@ -209,10 +218,6 @@ export default function SwapModule() {
       })
       .then(() => {
         enqueueSnackbar("Swap successful!", { variant: "success" });
-      })
-      .catch((error) => {
-        console.error("Error swapping tokens:", error);
-        enqueueSnackbar("Swap failed", { variant: "error" });
       });
   };
 

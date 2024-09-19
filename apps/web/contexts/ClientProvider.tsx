@@ -97,7 +97,7 @@ export const ClientProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     filter: () => false,
     retryOnError: true,
     shouldReconnect: () => true,
-    onMessage: (event) => {
+    onMessage: async (event) => {
       console.log("WebSocket message received:", event.data);
 
       const eventData = JSON.parse(event.data);
