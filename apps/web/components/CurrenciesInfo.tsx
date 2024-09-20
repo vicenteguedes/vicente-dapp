@@ -1,5 +1,6 @@
 import { useClient } from "@/contexts/ClientProvider";
 import { Box, Paper, Typography } from "@mui/material";
+import { formatEther } from "viem";
 
 export default function CurrenciesInfo() {
   const { balances, busdTotalSupply } = useClient();
@@ -46,7 +47,9 @@ export default function CurrenciesInfo() {
           <Typography variant="body2" color="textSecondary">
             BUSD Balance
           </Typography>
-          <Typography variant="h4">{balances.BUSD ? Number(balances.BUSD).toExponential(4) : 0}</Typography>
+          <Typography variant="h4">
+            {balances.BUSD ? Number(formatEther(BigInt(balances.BUSD))).toExponential(4) : 0}
+          </Typography>
         </Paper>
 
         <Paper
@@ -63,7 +66,7 @@ export default function CurrenciesInfo() {
           <Typography variant="body2" color="textSecondary">
             BUSD Total Supply
           </Typography>
-          <Typography variant="h4">{Number(busdTotalSupply).toExponential(1)}</Typography>
+          <Typography variant="h4">{Number(formatEther(BigInt(busdTotalSupply))).toExponential(1)}</Typography>
         </Paper>
       </Box>
     </Box>
