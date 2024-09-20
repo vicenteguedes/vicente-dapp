@@ -165,6 +165,11 @@ export default function SwapModule() {
 
     const numerator = inCurrencyReserve * parsedAmountOut * 1000n;
     const denominator = (outCurrencyReserve - parsedAmountOut) * 997n;
+
+    if (denominator <= 0n) {
+      return 0;
+    }
+
     const amountIn = numerator / denominator + 1n;
 
     return formatUnits(amountIn, inToken.decimals);
