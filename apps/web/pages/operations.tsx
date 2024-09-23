@@ -6,7 +6,7 @@ import { Address, formatEther, parseEther } from "viem";
 import { useClient } from "@/contexts/ClientProvider";
 import { useSnackbar } from "notistack";
 import CustomTextField from "@/components/CustomTextField";
-import { SEPOLIA_DATA, ERC20_ABI, ETH_DEAD_ADDRESS } from "@/utils/constants";
+import { SEPOLIA_DATA, ERC20_ABI } from "@/utils/constants";
 
 export default function Operations() {
   const { account, client } = useClient();
@@ -89,8 +89,8 @@ export default function Operations() {
       chain: SEPOLIA_DATA.chain,
       account,
       abi: ERC20_ABI,
-      functionName: "transfer",
-      args: [ETH_DEAD_ADDRESS, parseEther(tokenAmount)],
+      functionName: "burn",
+      args: [parseEther(tokenAmount)],
     });
 
     enqueueSnackbar(`Tokens burned successfully: ${hash}`, {
